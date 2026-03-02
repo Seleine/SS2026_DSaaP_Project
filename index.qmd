@@ -1,0 +1,746 @@
+---
+title: "Investigating Cat Movement Patterns, Space Use, and Environmental Influences"
+subtitle: "ACLS Spring Semester 2025: Track Module 1"
+author: "Selina Lepori"
+date: 2025-07-04
+format:
+  html:
+    embed-resources: true
+    toc: true
+    toc-depth: 4
+    css: styles.css
+    code-fold: false
+    theme:
+      dark: darkly
+execute:
+  warning: false
+  message: false
+lang: en
+lightbox: true
+bibliography: bib.bib
+editor: 
+  markdown: 
+    wrap: 72
+---
+
+```{r}
+#| include: false
+
+rm(list = ls())
+```
+
+```{r}
+#| include: false
+
+# sets background of figures = transparent (otherwise white borders around ggplots)
+knitr::opts_chunk$set(dev.args = list(bg = "transparent"))
+```
+
+# Abstract
+
+The spatial behavior of domestic cats (Felis catus) is influenced by environmental and temporal factors such as landscape structure, weather, and day–night cycles. This study analysed GPS tracking data from a domestic cat collected between April and November 2024, incorporating precipitation and land cover data to examine home range structure, habitat preference and avoidance, and movement patterns. Home ranges were estimated using Kernel Density Estimation (KDE). Results indicate smaller, more defined home ranges during dry periods and increased nocturnal activity with larger ranges at night. Movement patterns reveal distinct resting and hunting areas, while land cover analysis shows preference for vegetated and quiet habitats and avoidance of exposed or disturbed areas.
+
+# Introduction
+
+Research shows that domestic cat behaviour and roaming activity is influenced by many
+factors. For example, movement is often reduced during rainy days (@ani12141748) and the home range is usually larger in
+rural compared to urban habitats (@metsersCatexclusionZonesRural2010, @hallFactorsDeterminingHome2016, @pisanuGPSbasedSeasonalHome2020). @pisanuGPSbasedSeasonalHome2020 suggest that diverse landscapes encourages domestic cats to enlarge their areas. Furthermore, home range areas are often increased at night compared to day time due to decreased human disturbances and the cats nocturnal hunting activity (@barrattHomeRangeSize1997, @metsersCatexclusionZonesRural2010, @thomasRangingCharacteristicsDomestic2014). @barrattHomeRangeSize1997 show that the movement pattern is shaped by the availability of shelter and prey resources, indicating that cats often return to the same cover-rich sites. Their findings provided evidence, that domestic cats do not uniformly roam but rather focus around core areas. They suggest that resting and hiding spots are important drivers of space use. This highlights the importance to link the movement data (e.g. GPS tracking points) to different contextual variables, such as abiotic (climate, weather), biotic (vegetation, prey), anthropogenic (roads, land use), and temporal (time of day, seasonality) metrics, which is also emphasised by @brum-bastosContextawareMovementAnalysis2022. Therefore, land use and meteorological data was combined with the GPS tracking points.
+
+This gives rise to the following research questions guiding the analysis of the cat's GPS tracking data:
+
+-   Does the cat's home range structure vary during precipitation events or across
+    different times of the day (e.g., diurnal vs. nocturnal periods)?
+-   Which specific locations within the home range are characterised by
+    frequent stopping behaviour?
+-   Is the frequency of stops within the cat’s movement patterns
+    associated with precipitation levels?
+-   Does the spatial structure of the home range reveal any patterns of habitat preference or         avoidance?
+
+```{r}
+#| warning: false
+#| include: false
+
+library(leaflet)
+library(leaflet.extras)
+library(RColorBrewer)
+library(classInt)
+library(sf)
+library(sp)
+library(tidyverse)
+library(tmap)
+library(quarto)
+library(ggdark)
+library(ggpubr)
+library(kableExtra)
+library(ggnewscale)
+library(reshape2)
+library(smoothr)
+library(adehabitatHR)
+
+source("functions_dist_secs.R")
+source("function_read.R")
+source("function_kde.R")
+source("function_table.R")
+source("function_leaflet.R")
+
+options(scipen = 999) # disable exponential notation
+```
+
+```{r}
+#| warning: false
+#| include: false
+
+# original GPS tracking points
+# contains gps points and geometry
+data_raw <- function_read("data/data_raw.gpkg")
+
+# rename geom and ensure geometry column
+data_raw <- data_raw |>
+  dplyr::rename("geometry" = geom)
+
+st_geometry(data_raw) <- "geometry"
+
+# ensure correct time zone
+data_raw$time = as.POSIXct(data_raw$time, format = "%Y-%m-%d %H:%M:%S", tz = "Europe/Zurich")
+```
+
+```{r}
+#| warning: false
+#| include: false
+
+# original GPS tracking points
+# contains gps points, several parameters, and geometry
+data <- function_read("data/data_processed.gpkg")
+
+# rename geom and ensure geometry column
+data <- data |>
+  dplyr::rename("geometry" = geom)
+
+st_geometry(data) <- "geometry"
+
+# ensure correct time zone
+data$time = as.POSIXct(data$time, format = "%Y-%m-%d %H:%M:%S", tz = "Europe/Zurich") 
+```
+
+```{r}
+#| warning: false
+#| include: false
+
+land_cover <- st_read("data/land_cover_edit.gpkg", layer = "layer")
+
+grd_dominant <- st_read("data/data_grid_dominant.gpkg", layer = "layer")
+```
+
+# Material and Methods
+
+## Data Sets
+
+The primary dataset consists of GPS tracking data from a collar, recording the cat’s movement at 10-minute intervals. The data is available as a GPS Exchange Format (.gpx) file from [Tractive](https://tractive.com/de/){target="_blank"}. The raw data, exported in contained 19'907 points recorded from April to November 2024. Additionally, I incorporated meteorological data, including temperature, precipitation, and wind velocity, from the [MeteoSwiss](https://www.meteoswiss.admin.ch/weather/measurement-systems/land-based-stations/automatic-measurement-network.html){target="_blank"} automatic measurement network of the station «Zürich / Fluntern». This data is sampled every 10 minutes and stored in a CSV file. To analyse
+ground cover, I used vector data from the [Amtliche Vermessung of the City of Zurich](https://data.stadt-zuerich.ch/dataset/eea30476-44ca-4b2b-b74c-68a0da5a3956?){target="_blank"}. This dataset classifies areas such as buildings, streets, water, meadows, and forests, allowing spatial analysis of landscape preferences and avoidance.
+
+## Preprocessing
+
+The project work was generated in RStudio (Version 2025.05.0+496 "Mariposa Orchid"). In
+the [Appendix] the used packages are listed. Below I describe the
+pre-processing steps. The detailed steps are documented in
+the corresponding pre-processing files (see [Appendix]). Analyses were performed in LV95
+(EPSG: 2056). Original data were transformed from WGS84 (EPSG: 4326) to
+LV95 if necessary.
+
+### Data Tidying
+
+As first step of the data tidying step duplicates in the `time` column (datetime) were deleted. When connected to home Wi-Fi (Power Saving Zone), the GPS-collar
+tracking interval decreases, tracking the data points for time spent at home inaccurately. Therefore, home coordinates were determined, and GPS tracking points within a 8 m radius (which covers the house) buffer were removed. For checking the intervals, the time lag values were calculated (see [preprocessing.qmd](https://github.zhaw.ch/pages/leporsel/track_module1/preprocessing.html#calculate-time-lag-and-check-speed-value){target="_blank"}). The median interval is - as expected - around 10 minutes. Mean interval value is increased, which can be explained due to larger time gaps when, for example, the cat was at home or wasn’t wearing the tracker. For decreasing the complexity of further analyses, points with an interval smaller than nine minutes were omitted. 12'561 data points were remaining. For the detection of outliers, speed values were calculated. Omitting the points with an interval smaller 9 minutes simplified the speed calculation as well. The highest speed value is around 0.65 m/s or 2.35 km/h, respectively, which is plausible.
+
+### Home Range Structures and Precipitation Effects
+
+For the analysis of rainy weather the data of MeteoSwiss was used. To better reflect real-world conditions, I decided to merge short dry periods - those lasting less than one hour - with the preceding and following rainy periods. A more detailed description of the process and the code itself is found in [preprocessing.qmd](https://github.zhaw.ch/pages/leporsel/track_module1/preprocessing.html#precipitation){target="_blank"}. Afterwards, the GPS tracking points and the weather data were joined, using the nearest matching time point. The daily precipitation data was separated into two categories: dry and wet conditions.
+
+For further investigation, temporal patterns were assessed. The day was divided into defined periods (night, dawn, day, dusk). The variation in spatial use across these phases (in general and due to precipitation) was studied. For this task, I used the package `suncalc`.
+
+### Movement Analysis
+
+The goal of this part of the project is to differentiate stationary from moving phases. According to @tractiveWhyMyTracker2025, the tracking points’ positional inaccuracy is around eight meter. I used this information for determining the phases. For each GPS tracking point I calculated a buffer of a eight meter radius and checked whether the subsequent point is within this radius. If not, the original point was marked as «non-static» and I continued with the next point. If yes, the original point was marked as «static» and the origin was compared to each following point until a point was found which was not within the buffer. For the code and more details see [preprocessing.qmd](https://github.zhaw.ch/pages/leporsel/track_module1/preprocessing.html#section-2-movement-analysis){target="_blank"}. This file also shows an example plot of (non-)static data points.
+
+### Habitat Preference and Avoidance
+
+To evaluate whether the habitat structure correlates with the space use pattern, I integrated the land use data of the [Amtliche Vermessung](https://data.stadt-zuerich.ch/dataset/eea30476-44ca-4b2b-b74c-68a0da5a3956?){target="_blank"}. As the land use data is very detailed, I decided to summarise them (see [Supplementary Material]). Again, I determined the home coordinates and removed all parts of polygons within a radius of eight meters around the coordinates. The GPS data points were joined with the land cover data.
+
+Additionally, an area of 103.5 hectares - which includes the home coordinates - was partitioned into uniform spatial units (20 x 20 m grid cells). I quantified the GPS point density within each cell by overlaying the tracking data on the grid and computed the number of GPS fixes per cell. To generate a meaningful result comparing the density in each cell and the land cover, the most frequent land cover type within each cell had to be determined. For that, the land cover data was joined with the grid cells and the highest area per land cover per cell was calculated and and adopted for each cell. For further information and the code see [preprocessing.qmd](https://github.zhaw.ch/pages/leporsel/track_module1/preprocessing.html#section-3-landscape-of-fear){target="_blank"}.
+
+### Home Range Calculation
+
+The (within) home range structure was determined using [Kernel Density Estimation (KDE)](https://rpubs.com/titin/KDEinR){target="_blank"} with the `adehabitatHR` package. KDE estimates a probability surface representing the likelihood of the cat being found in a given area - its utilisation distribution (UD). Home ranges were calculated for 95%, 75%, 50%, 25%, and 10% UD. This function generates polygons which enclose the specified proportion of the predicted space use. Further information can be found in `function_kde.R` or [preprocessing.qmd](https://github.zhaw.ch/pages/leporsel/track_module1/preprocessing.html#function-kde){target="_blank"}.
+
+The code for the generation of the leaflet plots can be found in `function_leaflet.R` or [preprocessing.qmd](https://github.zhaw.ch/pages/leporsel/track_module1/preprocessing.html#function-leaflet){target="_blank"}.
+
+```{r}
+#| include: false
+
+data_prec <- data |> 
+  filter(precipitation == "TRUE")
+
+data_no_prec <- data |> 
+  filter(precipitation == "FALSE")
+
+data_night <- data |> 
+  filter(dayphase == "Nighttime")
+
+data_dawn <- data |> 
+  filter(dayphase == "Dawn")
+
+data_day <- data |> 
+  filter(dayphase == "Daytime")
+
+data_dusk <- data |> 
+  filter(dayphase == "Dusk")
+```
+
+# Exploratory Data Analysis (EDA)
+
+## Overview of Data Set
+
+```{r}
+#| label: tbl-overview
+#| tbl-cap: Overview of time lags in the gps points data set.
+#| warning: false
+#| echo: false
+
+table <- function_table(data_raw)
+
+knitr::kable(table)
+```
+
+@tbl-overview summarises certain aspects of the data set before omitting the data points with an interval smaller than 9 minutes per month. For each month, the median interval is - as expected - around 10 minutes. The mean value is larger, which can be explained due to larger time gaps when, for example, the cat was at home or wasn't wearing the tracker.
+
+The minimum interval is one second, which was recorded when using the «live mode» of the GPS tracker. The maximum value varies between the months, having the highest value in April with 287 hours, the lowest value in June with 38 hours. The last three columns summarise the number of data points, the number of points with an interval smaller than nine minutes, and the proportion in percent of points with an interval smaller than 9 minutes compared to the total per month. The proportion ranges from 16 to 25 percent. The remaining number of data points per month are still in a reasonable range.
+
+```{r}
+#| include: false
+
+rm(table)
+```
+
+## Number of Data Points per Category
+
+::: panel-tabset
+
+### Movement Analysis 
+
+```{r}
+#| label: fig-count-motion
+#| fig-cap: Number of data points per precipitation value separated by motion category.
+#| warning: false
+#| echo: false
+
+ggplot() +
+  geom_histogram(data=data, aes(x=precipitation, fill=precipitation), stat="count") +
+  labs(x="Precipitation", y="Count") +
+  facet_wrap(~static, 
+             labeller = labeller(static =
+                                   c("Not Static" = "Non-Static",
+                                     "Staitc" = "Static"))) +
+  scale_fill_brewer(palette = "Paired") +
+  #ylim(0, 2000) +
+  dark_mode() +
+  theme(legend.position="none", plot.background = element_rect(fill = "grey10"))
+```
+
+### Phases of the Day 
+
+```{r}
+#| label: fig-count-phases
+#| fig-cap: Number of data points per precipitation value separated by day phases.
+#| warning: false
+#| echo: false
+
+ggplot() +
+  geom_histogram(data=data, aes(x=precipitation, fill=precipitation), stat="count") +
+  labs(x="Precipitation", y="Count") +
+  facet_wrap(~dayphase) +
+  scale_fill_brewer(palette = "Paired") +
+  #ylim(0, 2000) +
+  dark_mode() +
+  theme(legend.position="none", plot.background = element_rect(fill = "grey10"))
+```
+
+:::
+
+@fig-count-motion gives an overview of the number of GPS tracking points per precipitation value and motion category. The figure shows that the number of points during dry periods outrange the number tracked during wet periods by far. This occurs because often during wet periods the cat was either not wearing the tracker or stayed at home. Additionally, the general number of observations of wet periods are smaller than dry periods. In other words, it was raining less than it was dry. This has to be kept in mind for further analysis. The difference of data points between static and non-static periods is much smaller in comparison. Still, the number of non-static data point is larger.
+
+@fig-count-phases shows that most of the data points were recorded during day time, followed by night time. Dawn and dusk show the lowest amount of data points. Each phase has the same pattern concerning the precipitation, increased number of points during dry periods.
+
+# Results
+
+## Home Range Structure and Precipitation Effects
+
+### Precipitation Effect
+
+```{r}
+#| include: false
+#| warning: false
+
+kde_prec = function_kde(data=data_prec)
+kde_no_prec = function_kde(data=data_no_prec)
+
+kde_prec$Variable = "Precipitation"
+kde_no_prec$Variable = "No Precipitation"
+kde_prec_no_prec = rbind(kde_prec, kde_no_prec)
+```
+
+```{r}
+#| label: fig-hr-map-prec
+#| fig-cap: Home Range during different day phases.
+#| warning: false
+#| echo: false
+
+fct_leaflet(data = kde_prec_no_prec, palette_of_choice = "viridis")
+```
+
+@fig-hr-map-prec shows the home range (KDE) separated into dry and wet periods. The structure within home range during dry periods appears slightly more compact and is shifted toward the center of the map. The range of during precipitation event expands slightly northwards, including coordinates close to home.
+
+The map on the left (no precipitation) shows three hot spots (10% utilisation distribution), having a total size of `r round(kde_no_prec$area[5], 2)` hectares. Two spots are close to canopy (one small spot in the south-west and the other at the pond of the botanical garden) and the last one is on the meadow/orchard right outside the botanical garden. The total area of home range during dry periods constitutes `r round(kde_no_prec$area[1], 2)` hectares.
+
+During precipitation events only one hot spot was recorded. However, this spot with an area of `r round(kde_prec$area[5], 2)` hectares larger than during dry periods. It includes canopy but also an open lawn in the botanical garden close to the pond. The area enclosing the whole home range during precipitation events is `r round(kde_prec$area[1], 2)` hectares.
+
+The general home range (with and without precipitation) enclose the botanical garden, the meadow/orchard of the [Quartierhof Wynegg](https://www.quartierhof-wynegg.ch/){target="_blank"}, the home coordinates, and the park around the church Neumünster.
+
+### Phases of the Day
+
+```{r}
+#| include: false
+#| warning: false
+
+kde_night = function_kde(data=data_night)
+kde_night$Variable = "Night"
+
+kde_dawn = function_kde(data=data_dawn)
+kde_dawn$Variable = "Dawn"
+
+kde_day = function_kde(data=data_day)
+kde_day$Variable = "Day"
+
+kde_dusk = function_kde(data=data_dusk)
+kde_dusk$Variable = "Dusk"
+
+kde_phases = rbind(kde_night, kde_dawn, kde_day, kde_dusk)
+```
+
+```{r}
+#| label: fig-hr-map-phases
+#| fig-cap: Home Range during different day phases.
+#| warning: false
+#| echo: false
+
+fct_leaflet(data = kde_phases, palette_of_choice = "plasma")
+```
+
+@fig-hr-map-phases shows the home range structure separated into four phases of the day. The total ranges span from `r round(kde_day$area[1], 2)` (day time) to `r round(kde_night$area[1], 2)` hectares (night time). The hot spot range from `r round(kde_day$area[5], 2)` (day time) to `r round(kde_dawn$area[5], 2)` hectares (dawn). Day and night time show more compact and distinct home range structures compared to dawn and dusk.
+
+## Movement Analysis
+
+```{r}
+#| include: false
+
+data_static <- data |>
+    filter(static == "Static") # filter the ones which are static
+
+data_not_static <- data |>
+    filter(static == "Not Static") # filter the ones which are not static
+
+data_static_prec <- data_static |>
+    filter(precipitation == "TRUE") # filter the ones which are static and precipitation
+
+data_static_no_prec <- data_static |>
+    filter(precipitation == "FALSE") # filter the ones which are static and no precipitation
+
+data_not_static_prec <- data_not_static |>
+    filter(precipitation == "TRUE") # filter the ones which are static and precipitation
+
+data_not_static_no_prec <- data_not_static |>
+    filter(precipitation == "FALSE") # filter the ones which are static and no precipitation
+```
+
+```{r}
+#| include: false
+#| warning: false
+
+kde_static = function_kde(data=data_static)
+kde_not_static = function_kde(data=data_not_static)
+
+kde_static$Variable = "Static"
+kde_not_static$Variable = "Non Static"
+kde_motion = rbind(kde_static, kde_not_static)
+```
+
+```{r}
+#| include: false
+#| warning: false
+
+kde_static_prec = function_kde(data=data_static_prec)
+kde_static_no_prec = function_kde(data=data_static_no_prec)
+kde_not_static_prec = function_kde(data=data_not_static_prec)
+kde_not_static_no_prec = function_kde(data=data_not_static_no_prec)
+
+kde_static_prec$Variable = "Static/Precipitation"
+kde_static_no_prec$Variable = "Static/No Precipitation"
+kde_not_static_prec$Variable = "Non-Static/Precipitation"
+kde_not_static_no_prec$Variable = "Non-Static/No Precipitation"
+
+kde_motion_precipitation = rbind(kde_static_prec, kde_static_no_prec, kde_not_static_prec, kde_not_static_no_prec)
+```
+
+```{r}
+#| label: fig-map-motion
+#| fig-cap: This figure shows the home range (KDE) for (non-)static data points.
+#| warning: false
+#| echo: false
+
+fct_leaflet(data = kde_motion, palette_of_choice = "Oranges")
+```
+
+@fig-map-motion shows the home range structure of the static (total range: `r round(kde_static$area[1], 2)` hectares) and the non-static data points (total range: `r round(kde_not_static$area[1], 2)` hectares) . The hot spot area of the static points is smaller (`r round(kde_static$area[5], 2)` hectares) than the non-static (`r round(kde_not_static$area[5], 2)` hectares). In general, the static data set lead to a more distinct home range structure.
+
+### Motion and Precipitation
+
+```{r}
+#| include: false
+
+data_table <- data |>
+  st_drop_geometry() |> 
+  group_by(precipitation) |>
+  rename("Precipitation" = precipitation) |> 
+  summarise("Static (%)" = round(sum(static == "Static")/n(), digits = 2)*100,
+            "Non-Static (%)" = round(sum(static == "Not Static")/n(), digits = 2)*100)
+```
+
+```{r}
+#| label: tbl-motion-precipitation
+#| warning: false
+#| tbl-cap: The table shows the percentage of static and non-static points withtin the precipitation categories.
+#| echo: false
+
+knitr::kable(data_table)
+```
+
+```{r}
+#| include: false
+
+rm(data_table)
+```
+
+```{r}
+#| label: fig-map-static-precipitation
+#| fig-cap: This figure shows the home range (KDE) for each motion and precipitation category.
+#| warning: false
+#| echo: false
+
+fct_leaflet(data = kde_motion_precipitation, palette_of_choice = "Blues")
+```
+
+@tbl-motion-precipitation and @fig-map-static-precipitation combine the analysis of movement and precipitation effects analysis. In @tbl-motion-precipitation it is apparent that precipitation events don't have a high influence on the cat's motion behaviour. Of the recorded data points around 60 percent are characterised as non-static, wheres around 40 percent are static.
+
+The total home ranges span from `r round(kde_static_no_prec$area[1], 2)` (static / no precipitation) to `r round(kde_not_static_prec$area[1], 2)` hectares (non-static / precipitation).
+
+## Habitat Preference and Avoidance
+
+### Grid Cells
+
+::: panel-tabset
+
+#### Map 
+
+```{r}
+#| label: fig-grid-count-map
+#| fig-cap: The figure shows the count of GPS points per grid cell and the satellite image in the background.
+#| warning: false
+#| echo: false
+
+# k-means breaks for classification
+kmeans_breaks <- classIntervals(grd_dominant$Count, n = 5, style = "kmeans")
+pal <- colorBin(brewer.pal(5, "YlOrRd"), bins = kmeans_breaks$brks)
+
+# transform CRS for leaflet
+grd_dominant_wgs <- st_transform(grd_dominant, crs = 4326)
+
+# create the leaflet map
+leaflet(grd_dominant_wgs)  |> 
+  addProviderTiles(providers$Esri.WorldImagery) |>
+  setView(lng = 8.56182, lat = 47.35839, zoom = 15) |>  # initial view
+  addPolygons(
+    fillColor = ~pal(Count),
+    weight = 1, # grid lines
+    opacity = 1, # grid lines
+    color = "black", # grid lines
+    fillOpacity = 0.4, # grid cells
+    label = ~paste("GPS Count", Count)) |>
+  addLegend(
+    pal = pal,
+    values = ~Count,
+    title = "GPS Count",
+    position = "bottomright"
+  ) |>
+  addResetMapButton() 
+```
+
+```{r}
+#| include: false
+
+rm(grd_dominant_wgs)
+```
+
+#### Count 
+
+```{r}
+#| label: fig-barplot-grid-count
+#| fig-cap: The figure shows the counts of points per grid cell (20 * 20 m) per land cover category.
+#| warning: false
+#| echo: false
+
+grd_dominant |> 
+  group_by(Ground) |> 
+  summarise(total_count = sum(Count), .groups = "drop") |> 
+  arrange(desc(total_count)) |> 
+  ggplot(aes(x = reorder(Ground, -total_count), y = total_count, fill = Ground)) +
+    geom_col() +
+    labs(y = "Count", x = "") +
+    scale_fill_manual(values = c("bisque", "grey27", "forestgreen", "olivedrab4", "palegreen2", "sienna4", "grey69", "steelblue1")) +
+    dark_mode() +
+    theme(plot.background = element_rect(fill = "grey10"),
+          axis.text.x = element_blank(),
+          axis.ticks.x = element_blank())
+```
+
+:::
+
+On @fig-grid-count-map one can see the number of GPS tracking points within each grid cell, ranging from 1 to 168 points. @fig-barplot-grid-count shows the count of data points within a grid cell jointed with land cover types.
+
+### GPS Points
+
+::: panel-tabset
+
+#### Map 
+
+```{r}
+#| label: fig-point-count-map
+#| fig-cap: The figure shows the GPS tracking points.
+#| warning: false
+#| echo: false
+
+tmap_mode("plot")
+tm_basemap("Esri.WorldImagery") +
+  tm_shape(data, name = "Home Range") +
+  tm_dots(col = "black", alpha = 0.6, cluster = TRUE) +
+  tm_layout(legend.text.align = "left")
+```
+
+#### Count 
+
+```{r}
+#| label: fig-barplot-points-count
+#| fig-cap: The figure shows the counts of GPS points per land cover category.
+#| warning: false
+#| echo: false
+
+ggplot(data=data, aes(x=fct_infreq(Ground), fill=Ground)) +
+  geom_bar() +
+  labs(y="Count", x="") +
+  scale_fill_manual(values=c("bisque", "grey27", "forestgreen", "olivedrab4", "palegreen2", "sienna4", "grey69", "steelblue1")) +
+    dark_mode() +
+    theme(plot.background = element_rect(fill = "grey10"),
+          axis.text.x = element_blank(),
+          axis.ticks.x = element_blank())
+```
+
+:::
+
+@fig-point-count-map and @fig-barplot-points-count represent similar information as @fig-grid-count-map and @fig-barplot-grid-count, but they differ in their data basis. @fig-point-count-map shows the actual GPS tracking points instead of point aggregated in grid cells. @fig-barplot-points-count presents the count of data points per land cover type.
+
+# Discussion
+
+## Influence of Precipitation and Temporal Factors on Home‑Range Structure
+
+The cat's space use changes substantially with precipitation. The analysis returns a smaller, more compact area during dry conditions with clearer defined hot spots. During precipitation events, it can be assumed that the cat seeks shelter, for example under canopy cover or similar structures. This impedes the accuracy of the GPS tracker, resulting in an increased hot spot region. This indicates that weather acts as a driver of space use patterns. However, @fig-count-phases and @fig-count-motion both show that the number of GPS tacking points during wet conditions is much smaller compared to dry conditions. This can lead to a more refined KDE for dry periods whereas for precipitation events the KDE is coarser, potentially overestimating space use. Furthermore, the increased home range does not coincide with literature (@ani12141748). This might occur due to decreased number of observations, too.
+
+According to @fig-count-phases most of the observations come from day time, followed by night time, dawn, and dusk. Again, one can perceive the pattern described above: The larger the number of GPS tracking points within a category, the smaller and more compact the home ranges and also the smaller the hot spots (`r round(kde_day$area[5], 2)` hectares for day time). However, the night-time category does not have the lowest number of GPS data points, it corresponds to the largest total home range area. This indicates an expansion of the cat’s range during nocturnal periods, a pattern consistent with findings reported in previous studies (e.g., @thomasRangingCharacteristicsDomestic2014).
+
+An additional noteworthy observation in @fig-hr-map-phases is the slightly increased use of the eastern part of the home range during dawn and night periods. This area corresponds to a meadow grazed by sheep during daytime and possibly dusk hours. Observationally, the cat tends to avoid areas occupied by sheep, which may explain this temporal spatial pattern. The spatial structure of the home ranges during dawn and dusk are very similar, as reflected by their comparable total areas (`r round(kde_dawn$area[1], 2)` hectares and `r round(kde_dusk$area[1], 2)` hectares) and hot spot sizes (`r round(kde_dawn$area[5], 2)` hectares and `r round(kde_dusk$area[5], 2)` hectares). Hot spots during all phases except daytime are predominantly located in the eastern part of the botanical garden and the meadow near the Quartierhof. Additionally, a small hot spot emerges in the northern part of the home range during nighttime.
+
+## Movement Behaviour, Precipitation, and Activity Hotspots
+
+@fig-map-motion shows the analysis of the home range taking into account transit (movement) and resting/stopping (stationary) behaviour. @fig-count-motion displays that the difference between the number of observations within moving or stationary phases is not that large compared to the precipitation categories. The static data results in more defined hot spots compared to non-static. The non-static part of @fig-map-motion reveals three distinct hot spots, which likely correspond to different behavioral activities. The first hot spot, located near the pond in the botanical garden, aligns with my direct observations of the cat resting in that area. The second, situated on the meadow east of the botanical garden, corresponds to a site where the cat frequently searches for mice. However, the southernmost hot spot cannot be interpreted based on my own observations. Again, the non-static part of @fig-map-motion shows a more pronounced emphasis on the home area. This is plausible, given that the actual home coordinates were excluded from the data set. This cluster may reflect the cat’s commuting movements in proximity to its home.
+
+Overall, the spatial patterns observed in the static data set resemble those recorded during dry conditions and daytime periods. This similarity may, once again, be an artefact of the increased number of GPS observations in these categories, potentially biasing the resulting KDE outputs.
+
+@tbl-motion-precipitation indicates that precipitation does not have a significant effect on the cat’s movement behaviour in this dataset. However, since the table lacks spatial context and detailed behavioural categorisation, conclusions of these findings remains limited.
+
+## Environmental Features Associated with Habitat Use and Avoidance
+
+@fig-grid-count-map reveals that uncovered places in the park (botanical garden) are avoided. A different pattern is seen on the meadow in the east of the botanical garden. The area is mostly uncovered, but at the same time mainly free of human activity (in contrast to the botanical garden). Although, as the area is used as a meadow to harvest grass for hay, the grass is often very high and therefore generates some cover nonetheless. Furthermore, the rather untouched area increases the appearance of mice, which is obviously another attraction for the cat. The results suggest that the movement pattern is shaped by the availability of shelter and prey resources and some focus around hot spots which are visited frequently. This is also seen in @barrattHomeRangeSize1997. The home range extends more on the green areas, which aligns with literature (@metsersCatexclusionZonesRural2010, @thomasRangingCharacteristicsDomestic2014, @dunfordSeasonalHabitatSelection2024).
+
+Several GPS points in the northwestern part of the home range are located along a street, which may indicate the cat’s route to the park area near the church Neumünster, which is on the other side of the street. In contrast, the major road (Forchstrasse) located in the northern portion of the home range appears to be consistently avoided. Analysis of land cover preferences, as shown in @fig-barplot-points-count, suggests that the cat predominantly uses meadows/orchards, areas around buildings (often gardens), and parks. Sports fields (which has the lowest total area in general) exhibit the lowest number of GPS points. Streets, despite having a relatively large area within the surroundings, are associated with only a few tracking points, further indicating possible avoidance behaviour (cf. [project PTED](https://github.zhaw.ch/pages/leporsel/PTED_project2/#land-cover-preference){target="_blank"}).
+
+A related pattern is displayed by @fig-point-count-map, which reveals the actual GPS tracking points associated with the land cover data set. @fig-barplot-grid-count results in a similar outcome as @fig-barplot-points-count. Only the categories Street and Forest are exchanged. This might suggest that a grid cell size of 20 * 20 meters is too imprecise to detect (smaller) streets accurately.
+
+Furthermore, @fig-barplot-points-count highlights a limitation related to the accuracy of the GPS tracker. In contrast, the representation of non-meaningful land cover types in @fig-barplot-grid-count (e.g. water and buildings) can be linked to the methodological approach, where the dominant land cover type within each grid cell is assigned to the entire cell. However, the inconsistencies represented in @fig-barplot-points-count might be due to GPS inaccuracy. As reported by @tractiveWhyMyTracker2025, the average positional error of the GPS tracker is approximately 8 meters, which can lead to misclassification of land cover types at fine spatial scales.
+
+## Limitations
+
+-   While 10-minute median time stamps benefit tracker battery life,
+    they hinder analyses of sudden behavioural changes like hunting.
+
+-   It is important to consider the inaccuracies of both GPS and land
+    cover data. The [City of
+    Zurich](https://data.stadt-zuerich.ch/dataset/eea30476-44ca-4b2b-b74c-68a0da5a3956?){target="_blank"}
+    reports an inaccuracy of ± 10 to 15 cm for the land cover data. According to @tractiveWhyMyTracker2025, the tracking points' positional inaccuracy is around 8 m.
+
+-   The analysis of precipitation effects has some limitations. Important considerations for this
+    analysis includes the cat not wearing the tracker
+    continuously, especially during rainy periods, requiring
+    verification of tracker use during these times. Additionally, the weather station of MeteoSwiss is at «Zürich / Fluntern», which is on the same hillside of Zürich but not at the exact same place as the home range of the cat. Therefore, precipitation might differ in reality.
+-   For each phase of the day the amount of hours is different and changes as well. This and seasonality in general was not considered in this project.
+-   While for the analysis of the phases of the day the temporal aspect was touched upon briefly, it was not investigated throughout in general.
+
+# Conclusion
+
+The cat’s space use is shaped by environmental conditions, phases of the day, movement behaviour, and land cover. But also by GPS accuracy and data quality. During dry periods, the home range is smaller and hot spots are more defined, while wet conditions lead to broader, less precise areas. Shelter-seeking behaviour could lead to reduced GPS accuracy. Home range size also varies with day phase, being most compact during the day and largest at night, reflecting increased nocturnal activity.
+
+Static behaviour results in clearer hot spots, aligning with observed resting and hunting sites. However, in this data set precipitation does not significantly affect whether the cat is stationary or moving.
+
+Land cover analysis shows a clear preference for vegetated and quiet areas—like meadows, gardens, and the canopy in parks. More exposed or disturbed areas such as large streets and open areas are avoided. These patterns suggest that weather, daily phases, and landscape features together have an influence of the cat’s spatial behaviour.
+
+# Use of Generative AI
+
+ChatGPT was used to generate code for the determination of [rainy periods](https://chatgpt.com/share/682ae22a-2e18-8012-99b7-abda090599a8){target="_blank"}. Furthermore I used ChatGPT to understand why code chunks didn't work as expected and for some inspiration concerning the package `leaflet`. Additionally, I used it's help to generate a `styles.css` file, which controls the alignment of the legend text within `leaflet` maps.
+
+# Appendix
+
+## Preprocessing
+
+All data, R code, and preprocessing steps are available:
+
+-   [Preprocessing](./preprocessing.html){target="_blank"}
+-   [GitHub Repository](https://github.zhaw.ch/leporsel/track_module1){target="_blank"}
+-   [Project PTED](https://github.zhaw.ch/pages/leporsel/PTED_project2/){target="_blank"}
+-   [Preprocessing Project PTED](https://github.zhaw.ch/pages/leporsel/PTED_project2/preprocessing.html){target="_blank"}
+-   [GitHub Repository Project PTED](https://github.zhaw.ch/leporsel/PTED_project2){target="_blank"}
+
+## R Packages
+
+The following R packages were used in the project:
+
+-   sf (@pebesmaSpatialDataScience2023)
+-   lubridate (@spinuLubridateMakeDealing2024)
+-   adehabitatHR (@calengeAdehabitatHRHomeRange2024)
+-   suncalc (@interfaceSuncalcComputeSun2022)
+-   tidyverse (@wickhamTidyverseEasilyInstall2023)
+-   tmap (@tennekesTmapThematicMaps2025)
+-   ggpubr (@kassambaraGgpubrGgplot2Based2025)
+-   reshape2 (@wickhamReshape2FlexiblyReshape2020)
+-   tidytext (@queirozTidytextTextMining2024)
+-   leaflet (@chengLeafletCreateInteractive2024)
+-   leaflet.extra (@gatschaLeafletextrasExtraFunctionality2024)
+-   RColorBrewer (@neuwirthRColorBrewerColorBrewerPalettes2022)
+-   classInt (@bivandClassIntChooseUnivariate2025)
+-   sp (@pebesmaSpClassesMethods2025)
+-   quarto (@allaireQuartoInterfaceQuarto2024)
+-   ggdark (@granthamGgdarkDarkMode2019)
+-   kableExtra (@zhuautKableExtraConstructComplex2024)
+-   ggnewscale (@campitelliGgnewscaleMultipleFill2025)
+-   data.table (@barrettDatatableExtensionDataframe2025)
+-   terra (@hijmansTerraSpatialData2025)
+-   smoothr (@strimas-mackeySmoothrSmoothTidy2025)
+
+## Supplementary Material
+
+### Grouping of Land Cover Data
+
+```{r}
+#| include: false
+
+summary_Art_TXT <- read.delim("data/summary_Art_TXT.csv", sep=",", row.names=1)
+```
+
+```{r}
+#| label: tbl-summary-landcover
+#| tbl-cap: This table shows how the raw data from the Amtliche Vermessung was grouped for the study.
+#| warning: false
+#| echo: false
+
+knitr::kable(summary_Art_TXT)
+
+rm(summary_Art_TXT)
+```
+
+### Overview of Home Range Estimation
+
+```{r}
+#| include: false
+
+kde_levels <- c(95, 75, 50, 25, 10)
+
+kde_phases <- kde_phases |> 
+  st_drop_geometry() |> 
+  dplyr::select(area, Variable) |> 
+  mutate("Utilisation Distribution (%)" = rep(kde_levels, times = 4)) |> 
+  rename("Area" = area)
+
+kde_motion <- kde_motion |> 
+  st_drop_geometry() |> 
+  dplyr::select(area, Variable) |> 
+  mutate("Utilisation Distribution (%)" = rep(kde_levels, times = 2)) |> 
+  rename("Area" = area)
+
+kde_prec_no_prec <- kde_prec_no_prec |> 
+  st_drop_geometry() |> 
+  dplyr::select(area, Variable) |> 
+  mutate("Utilisation Distribution (%)" = rep(kde_levels, times = 2)) |> 
+  rename("Area" = area)
+
+kde_motion_precipitation <- kde_motion_precipitation |> 
+  st_drop_geometry() |> 
+  dplyr::select(area, Variable) |> 
+  mutate("Utilisation Distribution (%)" = rep(kde_levels, times = 4)) |> 
+  rename("Area" = area)
+
+kde_total <- rbind(kde_prec_no_prec, kde_phases, kde_motion, kde_motion_precipitation)
+
+rownames(kde_total) <- NULL
+
+kde_total <- kde_total |> relocate(Variable)
+```
+
+```{r}
+#| label: tbl-kde-overview
+#| tbl-cap: This table shows the overview of the different KDE.
+#| warning: false
+#| echo: false
+
+knitr::kable(kde_total, digits = 2)
+```
+
+# Wordcount
+
+```{r}
+#| include: false
+
+# ::: panel-tabset ... ::: and the word_count add in don't work together. therefore, I had to run the add in without ::: panel-tabset ... :::.
+
+#words <- wordcountaddin::word_count("index.qmd")
+```
+
+```{r}
+#| echo: false
+
+words <- 3702
+
+words
+```
+
+```{r}
+#| include: false
+
+rm(list = ls())
+```
+
+
