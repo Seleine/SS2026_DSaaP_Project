@@ -1,0 +1,831 @@
+---
+title: "Preprocessing: Where is Jiji?"
+subtitle: Investigating Cat Movement, Space Use, and Environmental Influences
+author: Katharina Genucchi and Selina Lepori
+format:
+  html:
+    theme:
+      dark: darkly
+editor: visual
+---
+
+## Load Libraries
+
+clear environment
+
+```{r}
+rm(list = ls())
+```
+
+```{r}
+#| warning: false
+
+library(sf)
+library(lubridate)
+library(adehabitatHR)
+library(suncalc)
+library(tidyverse)
+library(tmap)
+library(adehabitatHR)
+library(quarto)
+
+# source("functions_dist_secs.R")
+# source("functions_territory_estimation.R")
+# source("function_group.R")
+```
+
+## Functions
+
+The following function for KDE was generated with the help of [ChatGPT](https://chatgpt.com/share/680fa817-0784-8012-a295-775907709f60){target="_blank"}
+
+```{r}
+# function calculating difference between two data points by second
+difftime_secs <- function(later, now){
+  as.numeric(difftime(later, now, units = "secs"))
+}
+
+# functions for calculating distance by element and time difference.
+distance_by_element <- function(later, now) {
+  as.numeric(
+    st_distance(later, now, by_element = TRUE)
+  )
+}
+
+# function for calculating speed  
+function_speed <- function(data, datetime, geometry) {
+  data <- data |>
+    arrange(datetime) |> # make sure order is correct
+    mutate(timelag = difftime_secs(later=lead(datetime), now=datetime),
+           steplength = distance_by_element(later=lead(geometry), now=geometry),
+           speed_ms = (steplength/timelag), #Calculate speed in m/s  
+           speed_kmh = (steplength/timelag)*3.6 # Calculate speed in km/h
+    )
+  return(data)
+}
+
+# function to calculate mcp per month
+# summarise() unions all points into a multipoint object.
+function_mcp <- function(data, ID) {
+  
+  data_multipoint <- data |>
+    group_by(month) |> 
+    summarise()
+  
+  # calculate the convex hull
+  data_mcp <- st_convex_hull(data_multipoint)
+  
+  data_mcp <- data_mcp |>
+    mutate(area_ha = as.numeric(st_area(geometry))/10000,
+           ID = ID,
+           method = "mcp")
+  
+  return(data_mcp)
+}
+
+# function for kernel density estimation
+function_kde <- function(data, ID) {
+  
+  separation <- unique(data$month)
+  
+  # initialise list to hold sf objects
+  kde_list <- lapply(separation, function(m) {
+    
+    data_sep <- data[data$month == m, ]
+    
+    
+    # convert to SpatialPoints
+    sp_points <- as(data_sep, "Spatial")
+    
+    # estimate utilisation distribution using kernel method
+    # probabilistic estimate of space use based on the input point locations
+    # This is a surface showing the probability of the animal being in each location.
+    kud <- kernelUD(sp_points)
+    
+    # get 95% territory as SpatialPolygons
+    # takes this utilisation distribution and extracts the home range polygon that contains 95% of the estimated utilisation, i.e., the area where the animal is estimated to spend 95% of its time. This is a common way to define an animal’s home range.
+    terr_kde <- getverticeshr(kud, percent=95)
+    
+    # ensure the correct CRS and make an sf out of st
+    terr_sf_kde <- st_transform(st_as_sf(terr_kde), st_crs(data))
+    
+    # Reset rownames
+    rownames(terr_sf_kde) <- NULL
+    
+    # Add month column
+    terr_sf_kde$month <- m
+    
+    # keep geometry only
+    terr_sf_kde <- terr_sf_kde["geometry"]
+    
+    # Add month column
+    terr_sf_kde$month <- m
+    
+    return(terr_sf_kde)
+  })
+  # Combine all months into one sf object
+  all_kde <- do.call(rbind, kde_list)
+  
+  all_kde <- all_kde |>
+    mutate(area_ha = as.numeric(st_area(geometry))/10000,
+           ID = ID,
+           method = "kde")
+  
+  return(all_kde)
+}
+
+# function for grouping by Ground and calculate proportion of land cover according to territory estimation method
+function_group <- function(data, data_land_cover, method_area, method_area_perc, buffer=FALSE) {
+  
+  data_new <- st_intersection(data, data_land_cover)
+  
+  if (buffer==TRUE) {
+    
+    data_new <- data_new |>
+      group_by(Ground) |>
+      summarise(area = sum(st_area(geometry))) |> 
+      mutate(area = as.numeric(area)/10000,
+             area_perc=round((area/sum(area)*100), digits=2))
+  }
+  
+  else {
+    data_new <- data_new |>
+      group_by(month, Ground) |>
+      summarise(area = sum(st_area(geometry))) |> 
+      mutate(area = as.numeric(area)/10000,
+             area_perc=round((area/sum(area)*100), digits=2))
+    data_new <- subset(data_new, select=-c(geometry))
+  }
+  
+  names(data_new)[names(data_new)=="area"] <- method_area
+  names(data_new)[names(data_new)=="area_perc"] <- method_area_perc
+  
+  data_new <- st_drop_geometry(data_new)
+  
+  return(data_new)
+}
+```
+
+## Read in and Tidy Data
+
+### Land Use Data
+
+#### Read in
+
+```{r}
+# read in geopackage containing lang cover
+land_cover <- st_read("data/land_cover.gpkg", layer = "layer")
+
+# rename geom to geometry, ensure correct geometry column
+names(land_cover)[names(land_cover)=="geom"] <- "geometry"
+st_geometry(land_cover) <- "geometry"
+
+# select only necessary columns
+land_cover <- subset(land_cover, select=c(Art_TXT, geometry))
+
+# geometry in metres, not degrees / ensure correct CRS
+land_cover <- st_transform(land_cover, crs=2056)
+```
+
+#### Group Land Use Data
+
+```{r}
+land_cover$Ground <- NA
+
+land_cover$Ground[grepl("Gebaeude", land_cover$Art_TXT)] <- "Building"
+
+land_cover$Ground[grepl("humusiert", land_cover$Art_TXT)] <- "Humus"
+land_cover$Ground[grepl("humusiert.Acker", land_cover$Art_TXT) | grepl("humusiert.Intensivkultur", land_cover$Art_TXT)] <- "Acre/Orchard"
+
+land_cover$Ground[grepl("bestockt", land_cover$Art_TXT)] <- "Forest"
+
+land_cover$Ground[grepl("befestigt.Strasse", land_cover$Art_TXT) |
+                      grepl("befestigt.Verkehr", land_cover$Art_TXT) |
+                      grepl("befestigt.uebrige_befestigte.Parkplatz", land_cover$Art_TXT)|                  grepl("humusiert.uebrige_humusierte.Verkehrsteilerflaeche", land_cover$Art_TXT) | grepl("befestigt.Trottoir", land_cover$Art_TXT) | grepl("befestigt.Wasser", land_cover$Art_TXT) | grepl("befestigt.uebrige", land_cover$Art_TXT) | grepl("befestigt.Bahn", land_cover$Art_TXT)] <- "Urban Habitat"
+
+land_cover$Ground[grepl("humusiert.Gartenanlage", land_cover$Art_TXT) | grepl("humusiert.uebrige", land_cover$Art_TXT)] <- "Park"
+
+land_cover$Ground[grepl("humusiert.Gartenanlage.Gartenanlage_Hausumschwung", land_cover$Art_TXT) | grepl("befestigt.uebrige_befestigte.Hausumschwung", land_cover$Art_TXT)] <- "Area around building"
+
+land_cover$Ground[grepl("Gewaesser", land_cover$Art_TXT)] <- "Water"
+
+# check whether there are no grouped land uses
+land_cover$Art_TXT[which(is.na(land_cover$Ground))]
+
+unique(land_cover$Ground)
+```
+
+```{r}
+# summarise grouping of Art_TXT
+summary_Art_TXT <- land_cover |> 
+  st_drop_geometry() |> 
+  group_by(Ground) |> 
+  summarise(Art_TXT = paste(unique(Art_TXT), collapse = "; ")) |> 
+  arrange(Ground)
+
+# write a new csv file
+#write.csv(summary_Art_TXT, "data/summary_Art_TXT.csv")
+```
+
+#### Determine Home
+
+```{r}
+#| warning: false
+
+# some data points are recorded at home. these have to be marked as "Home" in the land cover layer.
+
+# determine home
+home <- data.frame(E=2684988, N=1246066)
+
+# ensure correct CRS
+home <- home |>
+  st_as_sf(coords = c('E', 'N'), crs=2056)
+
+# set a buffer of 0.1m
+home_buffer <- st_buffer(home, dist=0.5)
+
+# subtract the buffer from polygon
+clipped_lc <- st_difference(land_cover, home_buffer)
+
+# add the same columns as in land_cover
+home_buffer <- home_buffer |> 
+  mutate(Art_TXT = NA,
+         Ground = "Home")
+
+# bind data set together
+land_cover <- rbind(clipped_lc, home_buffer)
+
+rm(home_buffer, clipped_lc)
+```
+
+```{r}
+# create a vector data set without invalid land cover classes
+land_cover_omit <- land_cover |>
+  filter(!(Ground == "Water" | Ground == "Building" | Ground == "Home"))
+```
+
+```{r}
+# create a vector data set without invalid land cover classes
+land_cover_omit <- land_cover |>
+  filter(!(Ground == "Water" | Ground == "Building"))
+```
+
+### GPS Data
+
+#### Read in
+
+```{r}
+# list all files to be read with the ending .gpx
+# $ = has to be at the end
+# function produces a vector of the names of files in the named directory.
+files <- list.files(path = "data_tractive", pattern = "\\.gpx$", full.names = TRUE)
+
+# read and append all files
+data_list <- lapply(files, function(f) st_read(f, layer = "track_points", quiet = TRUE))
+
+# instead of manually calling rbind(data_list[[1]], data_list[[2]], ...), do.call() automates it.
+merged_data <- do.call(rbind, data_list)
+
+rm(files, data_list)
+```
+
+```{r}
+# select only necessary columns
+data <- merged_data[, c("track_seg_point_id", "time", "geometry")]
+
+# WGS 4326, which is used by the package suncalc
+data <- st_transform(data, crs = 4326)
+
+# ensure correct time zone (Europe/Zurich)
+data$time <- with_tz(data$time, "Europe/Zurich")
+
+# add coordinates as separate columns
+data <- cbind(data, st_coordinates(data))
+
+# create a date, weekday and month column
+data <- data |>
+    dplyr::rename(
+    "lon" = X,
+    "lat" = Y) |> 
+  mutate(date = as.Date(time),
+         weekday = weekdays(time),
+         month = lubridate::month(time, label=TRUE, abbr=FALSE, locale="EN-uk"))
+
+rm(merged_data)
+```
+
+#### Calculate Sunrise and Sunset
+
+Now that the data set still has in the coordinate system which the package «suncalc» uses, we calculate the sunrise and sunset time for each day
+
+```{r}
+# calculate sunrise and sunset time for each data point
+sun_times <- getSunlightTimes(data = data, keep = c("sunrise", "sunset"), tz = "Europe/Zurich")
+data$sunrise <- sun_times$sunrise
+data$sunset <- sun_times$sunset
+
+# check whether its day or night
+data <- data |>
+  mutate(ID = ifelse(time >= sunrise & time <= sunset, "Day", "Night"))
+
+rm(sun_times)
+```
+
+#### Correct Coordinate System
+
+```{r}
+# geometry in metres, not degrees / ensure correct CRS
+data <- st_transform(data, crs=2056)
+
+# add coordinates as separate columns (in metres)
+data <- cbind(data, st_coordinates(data))
+
+# rename X and Y
+data <- data |>
+    dplyr::rename(
+    "E" = X,
+    "N" = Y)
+```
+
+## Invalid Data Points Handling
+
+### Duplicates in time Column
+
+```{r}
+# remove the duplicated rows in the time column
+data <- data|> 
+  distinct(time, .keep_all=TRUE)
+
+# generate unique id
+data$track_seg_point_id = seq(1, nrow(data))
+```
+
+### Calculate and Investigate Speed
+
+```{r}
+# calculate speed
+data <- function_speed(data=data, datetime=data$time, geometry=data$geometry)
+```
+
+check whether there are points in the same place with speed \> 0 km/h: 0 suspicious data points.
+
+```{r}
+data |>
+  arrange(track_seg_point_id, time) |>
+  mutate(
+    speed_kmh = ifelse(speed_kmh < 0.1, 0, speed_kmh),  # treat near-zero speeds as 0
+    e_lead = lead(E),
+    n_lead = lead(N),
+    same_coords = E == e_lead & N == n_lead,
+    suspicious = same_coords & speed_kmh != 0
+  ) |>
+  filter(suspicious)
+```
+
+```{r}
+# delete data points with speed >= 48 km/h
+data <- data |>
+  filter(!(speed_kmh >= 48))
+
+# vet data point
+data <- data |>
+  filter(!(N >= 1246400))
+
+# generate new unique id
+data$track_seg_point_id = seq(1, nrow(data))
+```
+
+### Check Invalid Data Points (on Water or Building)
+
+```{r}
+# join tacking points incl. invalid land cover
+data <- st_join(x=data, y=land_cover, join=st_intersects)
+
+# check how many points are on invalid ground cover
+nrow(filter(data, Ground == "Water" | Ground == "Building"))
+
+# check how many points are at home
+nrow(filter(data, Ground == "Home"))
+
+# as they do not represent home accurately, we remove those 1048 data points
+data <- data |>
+  filter(!(Ground == "Home"))
+
+# write new geopackage
+#st_write(data, "data/data_point_incl.gpkg", layer = "layer", append=FALSE)
+```
+
+### Reassign Invalid GPS Points
+
+The reassigning was generated with the help of [ChatGPT](https://chatgpt.com/share/680fa976-3e74-8012-82d3-34a48188277c){target="_blank"}
+
+```{r}
+#| warning: false
+
+# determine invalid classes
+invalid_classes <- c("Water", "Building", "Home")
+
+#invalid_classes <- c("Water", "Building")
+
+# rename geometry to original_geometry
+names(data)[names(data)=="geometry"] <- "original_geometry"
+st_geometry(data) <- "original_geometry"
+
+# split GPS points into valid and invalid
+invalid <- data |>
+  filter(Ground %in% invalid_classes)
+
+valid <- data |>  
+  filter(!Ground %in% invalid_classes)
+
+valid_gpkg <- land_cover |>
+  filter(!Ground %in% invalid_classes)
+
+# find nearest valid polygon for each invalid GPS point
+nearest <- st_nearest_feature(invalid, valid_gpkg)
+
+# get corresponding centroids
+# centroid = middle of valid polygon
+replacement_points <- st_centroid(valid_gpkg[nearest, ])
+
+# replace geometries
+invalid$geometry <- st_geometry(replacement_points)
+
+# calculate distance between original and new locations
+invalid$correction_distance <- st_distance(
+  invalid$original_geometry,
+  invalid$geometry,
+  by_element=TRUE
+)
+
+# create new columns in data_point
+valid$geometry <- valid$original_geometry
+
+# add 0, if class was already valid
+valid$correction_distance <- 0
+
+# join the two data frames
+data_reassigned <- rbind(valid, invalid)
+
+# sort according to column time
+data_reassigned <- data_reassigned[order(data_reassigned$time),]
+
+# reset index
+row.names(data_reassigned) <- NULL
+
+# reset geometry
+st_geometry(data_reassigned) <- "geometry"
+
+# join with new points
+data_reassigned <- data_reassigned |> 
+  dplyr::select(-c(Art_TXT, Ground))
+
+data_reassigned = st_join(data_reassigned, land_cover, join=st_intersects)
+
+# rename geometry column again
+names(data)[names(data)=="original_geometry"] <- "geometry"
+
+rm(valid, invalid, valid_gpkg, invalid_classes, nearest, replacement_points)
+```
+
+```{r}
+# check whether there are still invalid classes in the data set
+# with st_centroid() it can happen that the new point is not in the desired polygon. But as it is computationally less intensive than other methods we decided to stick with that.
+sum(data_reassigned$Ground=="Water")
+sum(data_reassigned$Ground=="Building")
+sum(data_reassigned$Ground=="Home")
+
+# because the numbers are so low, the data points which are still on invalid land cover classes are deleted
+data_reassigned <- data_reassigned |>
+  filter(!(Ground=="Water" | Ground=="Building" | Ground=="Home"))
+
+# data_reassigned <- data_reassigned |> 
+#   filter(!(Ground=="Water" | Ground=="Building"))
+
+# check if only the desired land cover classes are remaining in the new data set
+unique(data_reassigned$Ground)
+unique(data$Ground)
+
+# write new geopackage
+st_write(data_reassigned, "data/data_point_incl_re.gpkg", layer = "layer", append=FALSE)
+```
+
+## Day and Night Data Sets
+
+```{r}
+# separate by day/night
+data_day_re <- data_reassigned |> 
+  filter(ID == "Day")
+
+data_night_re <- data_reassigned |> 
+  filter(ID == "Night")
+```
+
+## Available Land Cover
+
+Set home and calculate a buffer of a radius = 350 m to represent available land cover around home range (as in Thomas et al., 2014).
+
+```{r}
+home_350 <- st_buffer(home, dist=350)
+
+home_350 <- home_350 |> 
+  mutate(month = NA,
+         method = "Available Land Cover",
+         ID = "Available Land Cover",
+         area_ha = as.numeric(st_area(geometry))/10000)
+
+rm(home)
+```
+
+## Territory Estimation (KDE & MCP)
+
+```{r}
+#| warning: false
+
+# as there was an error about geometry, we reset it before calculating the territory
+# reset geometry
+st_geometry(data) <- "geometry"
+
+# for data set incl invalid data points
+data_mcp_incl <- function_mcp(data=data, ID="incl.")
+data_kde_incl <- function_kde(data=data, ID="incl.")
+```
+
+```{r}
+#| warning: false
+
+# for data set with reassigned data points
+# reset geometry
+st_geometry(data_reassigned) <- "geometry"
+
+data_mcp_re <- function_mcp(data=data_reassigned, ID = "reassigned")
+data_kde_re <- function_kde(data=data_reassigned, ID = "reassigned")
+```
+
+```{r}
+#| warning: false
+
+# reset geometry
+st_geometry(data_day_re) <- "geometry"
+st_geometry(data_night_re) <- "geometry"
+
+data_day_mcp_re <- function_mcp(data=data_day_re, ID = "Day")
+data_night_mcp_re <- function_mcp(data=data_night_re, ID = "Night")
+data_day_kde_re <- function_kde(data=data_day_re, ID = "Day")
+data_night_kde_re <- function_kde(data=data_night_re, ID = "Night")
+
+rm(data_day_re, data_night_re)
+```
+
+```{r}
+# estimated territory contains the information on the area of territory per month and separated by estimation method (KDE & MCP). it also contains the information on the home buffer (available land cover)
+estimated_territory <- rbind(data_mcp_incl, data_kde_incl, data_mcp_re, data_kde_re, data_day_mcp_re, data_night_mcp_re, data_day_kde_re, data_night_kde_re, home_350)
+
+# write new geopackage
+#st_write(estimated_territory, "data/estimated_territory.gpkg", layer = "layer", append=FALSE)
+
+rm(estimated_territory)
+```
+
+## Land Cover and Territory
+
+```{r}
+#| warning: false
+
+# in the buffer there is no weighting / no preference of land cover, just represents what's there
+data_buffer_grouped <- function_group(data=home_350, data_land_cover=land_cover_omit, method="buffer", method_area_perc="buffer_perc", buffer=TRUE)
+
+# group by Ground and calculate the preferred area per Ground in % according to MCP for the data set incl. invalid data points.
+# as there was again a problem with the geometry column, we remove it here again (even though it is removed in the function), just to be sure.
+data_mcp_grouped_incl <- function_group(data=data_mcp_incl, data_land_cover=land_cover, method="mcp_incl", method_area_perc="mcp_incl_perc")
+data_mcp_grouped_incl <- subset(data_mcp_grouped_incl, select=-c(geometry))
+
+# group by Ground and calculate the preferred area per Ground in % according to KDE  for the data set incl. invalid data points.
+data_kde_grouped_incl <- function_group(data=data_kde_incl, data_land_cover=land_cover, method="kde_incl", method_area_perc="kde_incl_perc")
+data_kde_grouped_incl <- subset(data_kde_grouped_incl, select=-c(geometry))
+
+# group by Ground and calculate the preferred area per Ground in % according to MCP for the data set with reassigned invalid data points.
+data_mcp_grouped_re <- function_group(data=data_mcp_re, data_land_cover=land_cover_omit, method="mcp_re", method_area_perc="mcp_re_perc")
+data_mcp_grouped_re <- subset(data_mcp_grouped_re, select=-c(geometry))
+
+# group by Ground and calculate the preferred area per Ground in % according to KDE for the data set with reassigned invalid data points.
+data_kde_grouped_re <- function_group(data=data_kde_re, data_land_cover=land_cover_omit, method="kde_re", method_area_perc="kde_re_perc")
+data_kde_grouped_re <- subset(data_kde_grouped_re, select=-c(geometry))
+
+# group by Ground and calculate the preferred area per Ground in % according to MCP for the data set with reassigned invalid data points for daytime.
+data_day_mcp_grouped_re <- function_group(data=data_day_mcp_re, data_land_cover=land_cover_omit, method_area="mcp_day", method_area_perc="mcp_day_perc")
+data_day_mcp_grouped_re <- subset(data_day_mcp_grouped_re, select=-c(geometry))
+
+# group by Ground and calculate the preferred area per Ground in % according to MCP for the data set with reassigned invalid data points for nighttime.
+data_night_mcp_grouped_re <- function_group(data=data_night_mcp_re, data_land_cover=land_cover_omit, method_area="mcp_night", method_area_perc="mcp_night_perc")
+data_night_mcp_grouped_re <- subset(data_night_mcp_grouped_re, select=-c(geometry))
+
+# group by Ground and calculate the preferred area per Ground in % according to KDE for the data set with reassigned invalid data points for daytime.
+data_day_kde_grouped_re <- function_group(data=data_day_kde_re, data_land_cover=land_cover_omit, method_area="kde_day", method_area_perc="kde_day_perc")
+data_day_kde_grouped_re <- subset(data_day_kde_grouped_re, select=-c(geometry))
+
+# group by Ground and calculate the preferred area per Ground in % according to KDE for the data set with reassigned invalid data points for nighttime.
+data_night_kde_grouped_re <- function_group(data=data_night_kde_re, data_land_cover=land_cover_omit, method_area="kde_night", method_area_perc="kde_night_perc")
+data_night_kde_grouped_re <- subset(data_night_kde_grouped_re, select=-c(geometry))
+
+rm(data_mcp_incl, data_kde_incl, data_mcp_re, data_kde_re, data_day_mcp_re, data_night_mcp_re, data_day_kde_re, data_night_kde_re)
+```
+
+```{r}
+# create a new data frame combining all the beforehand generated data frames
+list_df = list(data_mcp_grouped_re, data_kde_grouped_re, data_day_mcp_grouped_re, data_night_mcp_grouped_re, data_day_kde_grouped_re, data_night_kde_grouped_re)
+
+data_joined_re <- list_df |> 
+  reduce(inner_join, by=c("month", "Ground"))
+
+data_joined_re <- inner_join(data_joined_re, data_buffer_grouped, by="Ground")
+```
+
+```{r}
+# create long format
+data_joined_long <- data_joined_re |> 
+  dplyr::select(-buffer_perc, -mcp_re_perc, -kde_re_perc, -mcp_day_perc, -kde_day_perc, -mcp_night_perc, -kde_night_perc) |> 
+  tidyr::pivot_longer(
+    cols = -c(month, Ground),
+    names_to = "Method",
+    values_to = "Area"
+  ) |> 
+  separate(Method, c("Method", "ID"), "_",  fill="right")
+
+# write new csv
+#write.csv(data_joined_long, "data/data_lc_territory_long.csv")
+```
+
+```{r}
+#| warning: false
+
+# calculate selection ratio of land cover
+# this should tell us, which land cover the cat prefers and avoids compared to available land cover
+data_joined_re <- data_joined_re |>
+  mutate(selection_ratio_mcp_re=mcp_re_perc/buffer_perc,
+  log_selection_mcp_re=log(selection_ratio_mcp_re),
+  selection_ratio_kde_re=kde_re_perc/buffer_perc,
+  log_selection_kde_re=log(selection_ratio_kde_re))
+
+# write new csv 
+#write.csv(data_joined_re, "data/data_lc_territory_re.csv")
+
+rm(data_joined_long_dn, data_joined_re, list_df, data_mcp_grouped_incl, data_kde_grouped_incl, data_mcp_grouped_re, data_kde_grouped_re, data_day_mcp_grouped_re, data_night_mcp_grouped_re, data_day_kde_grouped_re, data_night_kde_grouped_re, data_buffer_grouped)
+```
+
+## Monte Carlo Simulation for one Month with 50 Iterations
+
+### Data Preparation
+
+Only choose one month from `data` - we choose June because there are the most data points.
+
+```{r}
+##reset geometry column
+st_geometry(data) <- "geometry"
+
+##select June
+data_june <- data |> 
+  filter(month=="June")
+
+##select necessary columns
+data_june <- data_june[ , c("track_seg_point_id", "E", "N", "geometry")]
+```
+
+Generate normally distributed values.
+
+```{r}
+# set number of iterations
+iterations <- 50
+
+# initialise empty matrices for new x and y
+x_mat = matrix(NA, nrow(data_june), iterations) 
+y_mat = matrix(NA, nrow(data_june), iterations)
+
+# Fill empty matrices with normally distributed values. According to the GPS collar provider, the accuracy is 8m. We used 8/3 for the standard deviation as 3*sd usually contains around 99.7% of all values.  
+set.seed(111)
+
+for(rows in 1:nrow(data_june)){
+  for(columns in 1:iterations){
+    x_mat[rows,columns] <- rnorm(1,0,8/3)
+    y_mat[rows,columns] <- rnorm(1,0,8/3)
+  }
+}
+
+# add normally distributed values to coordinates and store it in x_mat and y_mat respectively
+for(rows in 1:nrow(data_june)){
+  for(columns in 1:iterations){
+    x_mat[rows,columns] <- x_mat[rows,columns]+data_june$E[rows]
+    y_mat[rows,columns] <- y_mat[rows,columns]+data_june$N[rows]
+  }
+}
+
+# initiate empty data frame for storing the combined x- and y-coordinates obtained from the iterations
+geom_iterations <- data.frame(matrix(ncol=0, nrow=nrow(data_june)))
+
+# fill the empty data frame
+for(columns in 1:iterations){
+  xy_mat <- cbind(x_mat[ ,columns], y_mat[ ,columns])
+  xy_sf <- st_as_sf(data.frame(xy_mat), coords=c(1,2), crs=2056)
+  geom_iterations[ , columns] <- xy_sf
+  names(geom_iterations)[columns] <- paste("Iteration", columns)
+}
+
+# remove some now unnecessary dataframes etc.
+#rm(x_mat, y_mat, xy_mat, xy_sf)
+
+# combine points from iterations with the original data
+data_june_all <- cbind(data_june$geometry, geom_iterations) 
+```
+
+```{r}
+# rename geometry column in `data_june`
+data_june_all <- data_june_all |>
+  rename("Original" = geometry)
+
+# transform to long
+june_all_long <- data_june_all |> 
+  data.frame() |> 
+  pivot_longer(
+    cols=everything(),
+    names_to="iteration",
+    values_to="geometry"
+  )
+
+# transform to sf-object
+june_all_long <- st_as_sf(june_all_long)
+
+# join with land cover data
+land_cover_reduced <- land_cover[ ,c("geometry", "Ground")]
+june_all_ground <- st_join(x=june_all_long, y=land_cover_reduced, join=st_intersects)
+
+# calculate percentage of different grounds, drop geometry & transform to data frame
+june_all_ground_perc <- june_all_ground |> 
+  dplyr::group_by(iteration, Ground) |> 
+  summarise(number_points=n()) |> 
+  mutate(percentage=round((number_points/sum(number_points)*100), digits=2))|>
+  st_drop_geometry() |> 
+  data.frame()
+```
+
+```{r}
+# transform to wide (first remove percentage)
+perc_wide <- june_all_ground_perc |>
+  dplyr::select(-percentage) |> 
+  pivot_wider(names_from=Ground, values_from=number_points) |> 
+  data.frame()
+
+rownames(perc_wide) <- perc_wide$iteration #give rows a name
+
+perc_wide <- perc_wide |> 
+  dplyr::select(-Home, -iteration) #remove unneccessary columns
+```
+
+### Chi-Squared-Test
+
+```{r}
+#| warning: false
+
+# save as two different data sets & add additional column for p-value in the iterations data frame
+perc_wide_orig <- perc_wide[which(rownames(perc_wide) == "Original"), ]
+
+perc_wide_iter <- perc_wide[which(rownames(perc_wide) != "Original"), ]
+perc_wide_iter$"p-value from chi-squared-test" <-  NA 
+
+# run loop for chi-square-testing the original against each iteration
+for (rows in 1:nrow(perc_wide_iter)){
+  vec_orig <- as.numeric(perc_wide_orig)
+  vec_iter <- as.numeric(perc_wide_iter[rows, 1:7 ])
+  chisq_test <- chisq.test(vec_orig, vec_iter)
+  perc_wide_iter$`p-value from chi-squared-test` <- chisq_test$p.value
+}
+
+#write.csv(perc_wide_orig, "data/perc_wide_orig.csv")
+#write.csv(perc_wide_iter, "data/perc_wide_iter.csv")
+```
+
+```{r}
+#| warning: false
+
+# also perform chi-squared-test on the total of the iterations
+# 1st initiate empty data frame
+perc_significance_total <- data.frame(matrix(ncol=ncol(perc_wide), nrow=3))
+rownames(perc_significance_total) <- c("mean of iterations", "median of iterations", "sum of iterations")
+colnames(perc_significance_total) <- colnames(perc_wide)
+
+# insert mean, median and sum from all iterations of all land cover types
+perc_significance_total[1, ] <- as.numeric(colMeans(perc_wide_iter))
+perc_significance_total[2, ] <- as.numeric(apply(perc_wide_iter,2,median))
+perc_significance_total[3, ] <- as.numeric(colSums(perc_wide_iter))
+
+# add additional column for p-value
+perc_significance_total$"p-value from chi-squared-test" <-  NA #add additional column for p-value
+
+# run loop for mean, median and sum
+for (rows in 1:nrow(perc_significance_total)){
+  vec_orig <- as.numeric(perc_wide_orig)
+  vec_iter <- as.numeric(perc_significance_total[rows,1:7 ])
+  chisq_test <- chisq.test(vec_orig, vec_iter)
+  perc_significance_total$`p-value from chi-squared-test` <- chisq_test$p.value
+}
+
+#write.csv(perc_significance_total, "data/perc_significance_total.csv")
+```
