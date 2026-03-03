@@ -131,6 +131,11 @@ land_cover <- st_read("data/land_cover_edit.gpkg", layer = "layer")
 grd_dominant <- st_read("data/data_grid_dominant.gpkg", layer = "layer")
 ```
 
+```{r}
+grd_dominant
+```
+
+
 # Material and Methods
 
 ## Data Sets
