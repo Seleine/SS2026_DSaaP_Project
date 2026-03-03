@@ -85,12 +85,24 @@ distance_by_element <- function(later, now) {
 }
 
 # function for calculating speed  
+# function_speed <- function(data, datetime, geometry) {
+#   data <- data |>
+#     arrange(datetime) |> # make sure order is correct
+#     mutate(steplength = distance_by_element(later=lead(geometry), now=geometry),
+#            speed_ms = round((steplength / timelag), digits = 2),   # calulate m/s
+#            speed_kmh = round((steplength / timelag) * 3.6, digits = 2)   # calulate km/h
+#     )
+#   return(data)
+# }
+
+# function for calculating speed  
 function_speed <- function(data, datetime, geometry) {
   data <- data |>
     arrange(datetime) |> # make sure order is correct
-    mutate(steplength = distance_by_element(later=lead(geometry), now=geometry),
-           speed_ms = round((steplength / timelag), digits = 2),   # calulate m/s
-           speed_kmh = round((steplength / timelag) * 3.6, digits = 2)   # calulate km/h
+    mutate(timelag = difftime_secs(later=lead(datetime), now=datetime),
+           steplength = distance_by_element(later=lead(geometry), now=geometry),
+           speed_ms = (steplength/timelag), #Calculate speed in m/s  
+           speed_kmh = (steplength/timelag)*3.6 # Calculate speed in km/h
     )
   return(data)
 }
@@ -206,50 +218,272 @@ fct_leaflet <- function(data, palette_of_choice) {
 
 # Read, Tidy, and Join Data Frames
 
-Earlier pre-processing of the data is found in the publication of the [previous project](https://github.zhaw.ch/pages/leporsel/PTED_project2/){target="_blank"} and the [corresponding pre-processing file](https://github.zhaw.ch/pages/leporsel/PTED_project2/preprocessing.html){target="_blank"}.
+## Land Use Data
+
+### Read in
+
+```{r}
+# read in geopackage containing lang cover
+land_cover <- st_read("data/land_cover.gpkg", layer = "layer")
+
+# rename geom to geometry, ensure correct geometry column
+names(land_cover)[names(land_cover)=="geom"] <- "geometry"
+st_geometry(land_cover) <- "geometry"
+
+# select only necessary columns
+land_cover <- subset(land_cover, select=c(Art_TXT, geometry))
+
+# geometry in metres, not degrees / ensure correct CRS
+land_cover <- st_transform(land_cover, crs=2056)
+```
+
+### Group Land Use Data
+
+```{r}
+land_cover$Ground <- NA
+
+land_cover$Ground[grepl("Gebaeude", land_cover$Art_TXT)] <- "Building"
+
+land_cover$Ground[grepl("humusiert", land_cover$Art_TXT)] <- "Humus"
+land_cover$Ground[grepl("humusiert.Acker", land_cover$Art_TXT) | grepl("humusiert.Intensivkultur", land_cover$Art_TXT)] <- "Acre/Orchard"
+
+land_cover$Ground[grepl("bestockt", land_cover$Art_TXT)] <- "Forest"
+
+land_cover$Ground[grepl("befestigt.Strasse", land_cover$Art_TXT) |
+                      grepl("befestigt.Verkehr", land_cover$Art_TXT) |
+                      grepl("befestigt.uebrige_befestigte.Parkplatz", land_cover$Art_TXT)|                  grepl("humusiert.uebrige_humusierte.Verkehrsteilerflaeche", land_cover$Art_TXT) | grepl("befestigt.Trottoir", land_cover$Art_TXT) | grepl("befestigt.Wasser", land_cover$Art_TXT) | grepl("befestigt.uebrige", land_cover$Art_TXT) | grepl("befestigt.Bahn", land_cover$Art_TXT)] <- "Urban Habitat"
+
+land_cover$Ground[grepl("humusiert.Gartenanlage", land_cover$Art_TXT) | grepl("humusiert.uebrige", land_cover$Art_TXT)] <- "Park"
+
+land_cover$Ground[grepl("humusiert.Gartenanlage.Gartenanlage_Hausumschwung", land_cover$Art_TXT) | grepl("befestigt.uebrige_befestigte.Hausumschwung", land_cover$Art_TXT)] <- "Area around building"
+
+land_cover$Ground[grepl("Gewaesser", land_cover$Art_TXT)] <- "Water"
+
+# check whether there are no grouped land uses
+land_cover$Art_TXT[which(is.na(land_cover$Ground))]
+
+unique(land_cover$Ground)
+```
+
+```{r}
+# summarise grouping of Art_TXT
+summary_Art_TXT <- land_cover |> 
+  st_drop_geometry() |> 
+  group_by(Ground) |> 
+  summarise(Art_TXT = paste(unique(Art_TXT), collapse = "; ")) |> 
+  arrange(Ground)
+
+# write a new csv file
+write.csv(summary_Art_TXT, "data/summary_Art_TXT.csv")
+```
+
+### Determine Home
 
 ```{r}
 #| warning: false
 
-# original GPS tracking points
-# contains gps points, land cover, and geometry
-data <- function_read("data/data_point_incl_wo_home.gpkg")
+# some data points are recorded at home. these have to be marked as "Home" in the land cover layer.
+
+# determine home
+home <- data.frame(E=2684988, N=1246066)
+
+# ensure correct CRS
+home <- home |>
+  st_as_sf(coords = c('E', 'N'), crs=2056)
+
+# set a buffer of 0.1m
+home_buffer <- st_buffer(home, dist=0.5)
+
+# subtract the buffer from polygon
+clipped_lc <- st_difference(land_cover, home_buffer)
+
+# add the same columns as in land_cover
+home_buffer <- home_buffer |> 
+  mutate(Art_TXT = NA,
+         Ground = "Home")
+
+# bind data set together
+land_cover <- rbind(clipped_lc, home_buffer)
+
+rm(home_buffer, clipped_lc)
+```
+
+## GPS
+
+### Read in
+
+```{r}
+# list all files to be read with the ending .gpx
+# $ = has to be at the end
+# function produces a vector of the names of files in the named directory.
+files <- list.files(path = "data_tractive", pattern = "\\.gpx$", full.names = TRUE)
+
+# read and append all files
+data_list <- lapply(files, function(f) st_read(f, layer = "track_points", quiet = TRUE))
+
+# instead of manually calling rbind(data_list[[1]], data_list[[2]], ...), do.call() automates it.
+merged_data <- do.call(rbind, data_list)
+
+rm(files, data_list)
+```
+
+```{r}
+# select only necessary columns
+data <- merged_data[, c("track_seg_point_id", "time", "geometry")]
+
+# WGS 4326, which is used by the package suncalc
+data <- st_transform(data, crs = 4326)
+
+# ensure correct time zone (Europe/Zurich)
+data$time <- with_tz(data$time, "Europe/Zurich")
+
+# add coordinates as separate columns
+data <- cbind(data, st_coordinates(data))
+
+# create a date, weekday and month column
+data <- data |>
+    dplyr::rename(
+    "lon" = X,
+    "lat" = Y) |> 
+  mutate(date = as.Date(time),
+         weekday = weekdays(time),
+         month = lubridate::month(time, label=TRUE, abbr=FALSE, locale="EN-uk"))
+
+rm(merged_data)
+```
+
+### Calculate Sunrise and Sunset
+
+Now that the data set still has in the coordinate system which the package «suncalc» uses, we calculate the sunrise and sunset time for each day
+
+```{r}
+# calculate sunrise and sunset time for each data point
+sun_times <- getSunlightTimes(data = data, keep = c("sunrise", "sunset"), tz = "Europe/Zurich")
+data$sunrise <- sun_times$sunrise
+data$sunset <- sun_times$sunset
+
+# check whether its day or night
+data <- data |>
+  mutate(ID = ifelse(time >= sunrise & time <= sunset, "Day", "Night"))
+
+rm(sun_times)
+```
+
+### Correct Coordinate System
+
+```{r}
+# geometry in metres, not degrees / ensure correct CRS
+data <- st_transform(data, crs=2056)
+
+# add coordinates as separate columns (in metres)
+data <- cbind(data, st_coordinates(data))
+
+# rename X and Y
+data <- data |>
+    dplyr::rename(
+    "E" = X,
+    "N" = Y)
+```
+
+### Duplicates in time Column
+
+```{r}
+# remove the duplicated rows in the time column
+data <- data|> 
+  distinct(time, .keep_all=TRUE)
+
+# generate unique id
+data$track_seg_point_id = seq(1, nrow(data))
+```
+
+### Calculate and Investigate Speed
+
+```{r}
+# calculate speed
+data <- function_speed(data=data, datetime=data$time, geometry=data$geometry)
+```
+
+check whether there are points in the same place with speed \> 0 km/h: 0 suspicious data points.
+
+```{r}
+data |>
+  arrange(track_seg_point_id, time) |>
+  mutate(
+    speed_kmh = ifelse(speed_kmh < 0.1, 0, speed_kmh),  # treat near-zero speeds as 0
+    e_lead = lead(E),
+    n_lead = lead(N),
+    same_coords = E == e_lead & N == n_lead,
+    suspicious = same_coords & speed_kmh != 0
+  ) |>
+  filter(suspicious)
+```
+
+```{r}
+# delete data points with speed >= 48 km/h
+data <- data |>
+  filter(!(speed_kmh >= 48))
+
+# vet data point
+data <- data |>
+  filter(!(N >= 1246400))
+
+# generate new unique id
+data$track_seg_point_id = seq(1, nrow(data))
+```
+
+## Merge GPS and LC
+
+```{r}
+# join tacking points incl. invalid land cover
+data <- st_join(x=data, y=land_cover, join=st_intersects)
+
+# check how many points are on invalid ground cover
+nrow(filter(data, Ground == "Water" | Ground == "Building"))
+
+# check how many points are at home
+nrow(filter(data, Ground == "Home"))
+
+# as they do not represent home accurately, we remove those 1048 data points
+data <- data |>
+  filter(!(Ground == "Home"))
+```
+
+```{r}
+data
+```
+
+
+```{r}
+#| warning: false
 
 # select necessary columns and create hour column
 data <- data |>
-  dplyr::select(time, date, month, sunrise, sunset, ID, geom, E, N, lon, lat) |> 
-  mutate(hour = hour(round_date(time, "hour"))) |> 
-  dplyr::rename("geometry" = geom)
+  dplyr::select(time, date, month, sunrise, sunset, ID, geometry, E, N, lon, lat) |> 
+  mutate(hour = hour(round_date(time, "hour")))
 
 # set geometry column
 st_geometry(data) <- "geometry"
 
 # ensure correct time zone
 data$time = as.POSIXct(data$time, format = "%Y-%m-%d %H:%M:%S", tz = "Europe/Zurich")
+```
 
+```{r}
 # meteo data
-data_meteo <- read.csv("sma-meteoswiss-dataset/sma-meteoswiss-dataset.csv")
+data_meteo <- read.csv("data/sma-meteoswiss-dataset.csv")
 
 # select only precipitation column and ensure correct time zone
 data_meteo <- data_meteo |> 
   dplyr::select(time, rain10minsum) |> 
   na.omit() |> 
   mutate(time = as.POSIXct(time, format = "%d/%m/%Y %H:%M", tz = "Europe/Zurich"))
+```
 
-# meteo data
-data_meteo <- read.csv("sma-meteoswiss-dataset/sma-meteoswiss-dataset.csv")
-
-# select only precipitation column and ensure correct time zone
-data_meteo <- data_meteo |> 
-  dplyr::select(time, rain10minsum) |> 
-  na.omit() |> 
-  mutate(time = as.POSIXct(time, format = "%d/%m/%Y %H:%M", tz = "Europe/Zurich"))
-
+```{r}
 # read in geopackage containing land use data
 land_cover <- st_read("data/land_cover.gpkg", layer = "layer")
 
-# rename geom to geometry, ensure correct geometry column
-names(land_cover)[names(land_cover)=="geom"] <- "geometry"
+# ensure correct geometry column
 st_geometry(land_cover) <- "geometry"
 
 # select only necessary columns
@@ -293,7 +527,7 @@ data <- setdiff(data, home_points)
 ```{r}
 #| include: FALSE
 
-#st_write(data, "data/data_raw.gpkg", layer = "layer", append=FALSE)
+st_write(data, "data/data_raw.gpkg", layer = "layer", append=FALSE)
 ```
 
 ```{r}
@@ -713,26 +947,6 @@ land_cover$Art_TXT[which(is.na(land_cover$Ground))]
 unique(land_cover$Ground)
 ```
 
-Create a new .csv file, which gives an overview over the original categories and their new categories.
-
-```{r}
-# summarise grouping of Art_TXT
-summary_Art_TXT <- land_cover |> 
-  st_drop_geometry() |> 
-  group_by(Ground) |> 
-  summarise(Art_TXT = paste(unique(Art_TXT), collapse = "; ")) |> 
-  arrange(Ground)
-
-# write a new csv file
-#write.csv(summary_Art_TXT, "data/summary_Art_TXT.csv")
-```
-
-```{r}
-#| include: false
-
-rm(summary_Art_TXT)
-```
-
 ## Determine Home
 
 The area which represent home has to be omitted from the land cover data as well.
@@ -770,7 +984,7 @@ land_cover <- rbind(clipped_lc, home_buffer)
 
 ```{r}
 # write new geopackage
-#st_write(land_cover, "data/land_cover_edit.gpkg", layer = "layer", append=FALSE)
+st_write(land_cover, "data/land_cover_edit.gpkg", layer = "layer", append=FALSE)
 ```
 
 ```{r}
@@ -787,7 +1001,7 @@ data <- st_join(x=data, y=land_cover, join=st_intersects)
 ```
 
 ```{r}
-#st_write(data, "data/data_processed.gpkg", layer = "layer", append=FALSE)
+st_write(data, "data/data_processed.gpkg", layer = "layer", append=FALSE)
 ```
 
 ## Uniform Spatial Units: Grid Cells
@@ -905,7 +1119,7 @@ unique(grd_unique$Ground)
 ```{r}
 #| include: false
 
-#st_write(grd_unique, "data/data_grid_dominant.gpkg", layer = "layer", append=FALSE)
+st_write(grd_unique, "data/data_grid_dominant.gpkg", layer = "layer", append=FALSE)
 ```
 
 
