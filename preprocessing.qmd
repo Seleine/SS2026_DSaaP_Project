@@ -84,24 +84,21 @@ distance_by_element <- function(later, now) {
   )
 }
 
-# function for calculating speed  
-# function_speed <- function(data, datetime, geometry) {
-#   data <- data |>
-#     arrange(datetime) |> # make sure order is correct
-#     mutate(steplength = distance_by_element(later=lead(geometry), now=geometry),
-#            speed_ms = round((steplength / timelag), digits = 2),   # calulate m/s
-#            speed_kmh = round((steplength / timelag) * 3.6, digits = 2)   # calulate km/h
-#     )
-#   return(data)
-# }
-
-# function for calculating speed  
-function_speed <- function(data, datetime, geometry) {
+# function for calculating timelag  
+function_timelag <- function(data, datetime, geometry) {
   data <- data |>
     arrange(datetime) |> # make sure order is correct
     mutate(timelag = difftime_secs(later=lead(datetime), now=datetime),
-           steplength = distance_by_element(later=lead(geometry), now=geometry),
-           speed_ms = (steplength/timelag), #Calculate speed in m/s  
+           steplength = distance_by_element(later=lead(geometry), now=geometry)
+    )
+  return(data)
+}
+
+# function for calculating speed 
+function_speed <- function(data, datetime) {
+  data <- data |>
+    arrange(datetime) |> # make sure order is correct
+    mutate(speed_ms = (steplength/timelag), #Calculate speed in m/s  
            speed_kmh = (steplength/timelag)*3.6 # Calculate speed in km/h
     )
   return(data)
@@ -118,8 +115,7 @@ function_table <- function(data) {
     group_by(month) |> 
     arrange(time) |>
     rename("Month" = month) |> 
-    mutate(timestamp = difftime_secs(lead(time), time),
-           timestamp_min = as.integer(difftime_secs(lead(time), time)/60))
+    mutate(timestamp = difftime_secs(lead(time), time))
   
   table <- summarise(data_no_geo,
                      "Median Interval (min)"= round(median(timestamp, na.rm = TRUE)/60, digits=2),
@@ -218,6 +214,39 @@ fct_leaflet <- function(data, palette_of_choice) {
 
 # Read, Tidy, and Join Data Frames
 
+## Determine Home
+
+At home, the tracker connects with the WiFi and should be in a power saving zone and stop sending data. However, it still sends data irregularly. Therefore, the home coordinates have to be determined and a buffer of 8 m radius has to be added. This data frame can be used later to remove the wrong GPS data points and the land cover data within this buffer.
+
+```{r}
+#| include: false
+
+# determine home
+home <- data.frame(name=c("home"), E=c(2684990), N=c(1246068))
+```
+
+```{r}
+# ensure correct CRS
+home <- home |>
+  st_as_sf(coords = c('E', 'N'), crs=2056)
+
+# set a buffer of 8 m
+home_buffer <- st_buffer(home[,2], dist=8)
+```
+
+## Meteo Data
+
+```{r}
+# meteo data
+data_meteo <- read.csv("data/sma-meteoswiss-dataset.csv")
+
+# select only precipitation column and ensure correct time zone
+data_meteo <- data_meteo |> 
+  dplyr::select(time, rain10minsum) |> 
+  na.omit() |> 
+  mutate(time = as.POSIXct(time, format = "%d/%m/%Y %H:%M", tz = "Europe/Zurich"))
+```
+
 ## Land Use Data
 
 ### Read in
@@ -239,23 +268,43 @@ land_cover <- st_transform(land_cover, crs=2056)
 
 ### Group Land Use Data
 
+As there are a lot of categories in the original land cover data set, I group them and create the following new categories:
+- Building
+- Humus
+- Meadow/Orchard
+- Forest
+- Urban Habitat
+- Park
+- Area around building
+- Water
+
+In the end, I check whether each category belongs to a new category.
+
 ```{r}
 land_cover$Ground <- NA
 
 land_cover$Ground[grepl("Gebaeude", land_cover$Art_TXT)] <- "Building"
 
 land_cover$Ground[grepl("humusiert", land_cover$Art_TXT)] <- "Humus"
-land_cover$Ground[grepl("humusiert.Acker", land_cover$Art_TXT) | grepl("humusiert.Intensivkultur", land_cover$Art_TXT)] <- "Acre/Orchard"
+land_cover$Ground[grepl("humusiert.Acker", land_cover$Art_TXT) |
+                    grepl("humusiert.Intensivkultur", land_cover$Art_TXT)] <- "Meadow/Orchard"
 
 land_cover$Ground[grepl("bestockt", land_cover$Art_TXT)] <- "Forest"
 
 land_cover$Ground[grepl("befestigt.Strasse", land_cover$Art_TXT) |
-                      grepl("befestigt.Verkehr", land_cover$Art_TXT) |
-                      grepl("befestigt.uebrige_befestigte.Parkplatz", land_cover$Art_TXT)|                  grepl("humusiert.uebrige_humusierte.Verkehrsteilerflaeche", land_cover$Art_TXT) | grepl("befestigt.Trottoir", land_cover$Art_TXT) | grepl("befestigt.Wasser", land_cover$Art_TXT) | grepl("befestigt.uebrige", land_cover$Art_TXT) | grepl("befestigt.Bahn", land_cover$Art_TXT)] <- "Urban Habitat"
+                    grepl("befestigt.Verkehr", land_cover$Art_TXT) |            
+                    grepl("humusiert.uebrige_humusierte.Verkehrsteilerflaeche", land_cover$Art_TXT) |
+                    grepl("befestigt.Trottoir", land_cover$Art_TXT) | grepl("befestigt.Bahn", land_cover$Art_TXT)] <- "Street"
 
-land_cover$Ground[grepl("humusiert.Gartenanlage", land_cover$Art_TXT) | grepl("humusiert.uebrige", land_cover$Art_TXT)] <- "Park"
+land_cover$Ground[grepl("befestigt.uebrige_befestigte.Parkplatz", land_cover$Art_TXT) |
+                    grepl("befestigt.Wasser", land_cover$Art_TXT) |
+                    grepl("befestigt.uebrige", land_cover$Art_TXT)] <- "Sports Field"
 
-land_cover$Ground[grepl("humusiert.Gartenanlage.Gartenanlage_Hausumschwung", land_cover$Art_TXT) | grepl("befestigt.uebrige_befestigte.Hausumschwung", land_cover$Art_TXT)] <- "Area around building"
+land_cover$Ground[grepl("humusiert.Gartenanlage", land_cover$Art_TXT) |
+                    grepl("humusiert.uebrige", land_cover$Art_TXT)] <- "Park"
+
+land_cover$Ground[grepl("humusiert.Gartenanlage.Gartenanlage_Hausumschwung", land_cover$Art_TXT) |
+                    grepl("befestigt.uebrige_befestigte.Hausumschwung", land_cover$Art_TXT)] <- "Area around building"
 
 land_cover$Ground[grepl("Gewaesser", land_cover$Art_TXT)] <- "Water"
 
@@ -277,35 +326,23 @@ summary_Art_TXT <- land_cover |>
 write.csv(summary_Art_TXT, "data/summary_Art_TXT.csv")
 ```
 
-### Determine Home
+### Remove invalid Data
 
 ```{r}
 #| warning: false
 
 # some data points are recorded at home. these have to be marked as "Home" in the land cover layer.
-
-# determine home
-home <- data.frame(E=2684988, N=1246066)
-
-# ensure correct CRS
-home <- home |>
-  st_as_sf(coords = c('E', 'N'), crs=2056)
-
-# set a buffer of 0.1m
-home_buffer <- st_buffer(home, dist=0.5)
-
+ 
 # subtract the buffer from polygon
 clipped_lc <- st_difference(land_cover, home_buffer)
 
 # add the same columns as in land_cover
-home_buffer <- home_buffer |> 
+home_buffer_lc <- home_buffer |>
   mutate(Art_TXT = NA,
          Ground = "Home")
 
 # bind data set together
-land_cover <- rbind(clipped_lc, home_buffer)
-
-rm(home_buffer, clipped_lc)
+land_cover <- rbind(clipped_lc, home_buffer_lc)
 ```
 
 ## GPS
@@ -352,23 +389,6 @@ data <- data |>
 rm(merged_data)
 ```
 
-### Calculate Sunrise and Sunset
-
-Now that the data set still has in the coordinate system which the package «suncalc» uses, we calculate the sunrise and sunset time for each day
-
-```{r}
-# calculate sunrise and sunset time for each data point
-sun_times <- getSunlightTimes(data = data, keep = c("sunrise", "sunset"), tz = "Europe/Zurich")
-data$sunrise <- sun_times$sunrise
-data$sunset <- sun_times$sunset
-
-# check whether its day or night
-data <- data |>
-  mutate(ID = ifelse(time >= sunrise & time <= sunset, "Day", "Night"))
-
-rm(sun_times)
-```
-
 ### Correct Coordinate System
 
 ```{r}
@@ -385,7 +405,13 @@ data <- data |>
     "N" = Y)
 ```
 
-### Duplicates in time Column
+### Remove invalid Data Points
+
+```{r}
+# there is one data point recorded at the vet which must be deleted
+data <- data |>
+  filter(!(N >= 1246400))
+```
 
 ```{r}
 # remove the duplicated rows in the time column
@@ -396,70 +422,12 @@ data <- data|>
 data$track_seg_point_id = seq(1, nrow(data))
 ```
 
-### Calculate and Investigate Speed
-
-```{r}
-# calculate speed
-data <- function_speed(data=data, datetime=data$time, geometry=data$geometry)
-```
-
-check whether there are points in the same place with speed \> 0 km/h: 0 suspicious data points.
-
-```{r}
-data |>
-  arrange(track_seg_point_id, time) |>
-  mutate(
-    speed_kmh = ifelse(speed_kmh < 0.1, 0, speed_kmh),  # treat near-zero speeds as 0
-    e_lead = lead(E),
-    n_lead = lead(N),
-    same_coords = E == e_lead & N == n_lead,
-    suspicious = same_coords & speed_kmh != 0
-  ) |>
-  filter(suspicious)
-```
-
-```{r}
-# delete data points with speed >= 48 km/h
-data <- data |>
-  filter(!(speed_kmh >= 48))
-
-# vet data point
-data <- data |>
-  filter(!(N >= 1246400))
-
-# generate new unique id
-data$track_seg_point_id = seq(1, nrow(data))
-```
-
-## Merge GPS and LC
-
-```{r}
-# join tacking points incl. invalid land cover
-data <- st_join(x=data, y=land_cover, join=st_intersects)
-
-# check how many points are on invalid ground cover
-nrow(filter(data, Ground == "Water" | Ground == "Building"))
-
-# check how many points are at home
-nrow(filter(data, Ground == "Home"))
-
-# as they do not represent home accurately, we remove those 1048 data points
-data <- data |>
-  filter(!(Ground == "Home"))
-```
-
-```{r}
-data
-```
-
-
 ```{r}
 #| warning: false
 
-# select necessary columns and create hour column
-data <- data |>
-  dplyr::select(time, date, month, sunrise, sunset, ID, geometry, E, N, lon, lat) |> 
-  mutate(hour = hour(round_date(time, "hour")))
+# select necessary columns
+# data <- data |>
+#   dplyr::select(time, date, month, sunrise, sunset, ID, geometry, E, N, lon, lat)
 
 # set geometry column
 st_geometry(data) <- "geometry"
@@ -468,52 +436,7 @@ st_geometry(data) <- "geometry"
 data$time = as.POSIXct(data$time, format = "%Y-%m-%d %H:%M:%S", tz = "Europe/Zurich")
 ```
 
-```{r}
-# meteo data
-data_meteo <- read.csv("data/sma-meteoswiss-dataset.csv")
-
-# select only precipitation column and ensure correct time zone
-data_meteo <- data_meteo |> 
-  dplyr::select(time, rain10minsum) |> 
-  na.omit() |> 
-  mutate(time = as.POSIXct(time, format = "%d/%m/%Y %H:%M", tz = "Europe/Zurich"))
-```
-
-```{r}
-# read in geopackage containing land use data
-land_cover <- st_read("data/land_cover.gpkg", layer = "layer")
-
-# ensure correct geometry column
-st_geometry(land_cover) <- "geometry"
-
-# select only necessary columns
-land_cover <- subset(land_cover, select=c(Art_TXT, geometry))
-
-# geometry in metres, not degrees / ensure correct CRS
-land_cover <- st_transform(land_cover, crs=2056)
-```
-
-## Determine Home
-
-Even though the tracker connects with the WiFi and should be in a power saving zone, it sends data irregularly. Therefore, these points have to be removed. I determined the home coordinates, added a buffer with a 8 m radius, and clipped all GPS tracking points within the buffer.
-
-```{r}
-#| include: false
-
-# determine home
-home <- data.frame(name=c("home"), E=c(2684990), N=c(1246068))
-```
-
-```{r}
-# ensure correct CRS
-home <- home |>
-  st_as_sf(coords = c('E', 'N'), crs=2056)
-
-# set a buffer of 8 m
-home_buffer <- st_buffer(home[,2], dist=8)
-```
-
-Now all GPS tracking points which are located within the buffer representing home can be omitted.
+As mentioned above, the GPS tracking points which are located within the buffer representing home shall be omitted.
 
 ```{r}
 # get GPS tracking points within the home buffer
@@ -536,7 +459,27 @@ st_write(data, "data/data_raw.gpkg", layer = "layer", append=FALSE)
 rm(home_buffer, home, home_points)
 ```
 
-## Calculate Time Lag and Check Speed Value
+### Calculate Time Lag and Check Speed Value
+
+Speed is calculated for indicating invalid data points.
+
+```{r}
+# calculate timelag and speed
+data <- function_timelag(data=data, datetime=data$time, geometry=data$geometry)
+
+data <- function_speed(data=data, datetime=data$time)
+```
+
+Speed larger than 48 km/h is not possible, therefore these points will be omitted.
+
+```{r}
+# delete data points with speed >= 48 km/h
+data <- data |>
+  filter(!(speed_kmh >= 48))
+
+# generate new unique id
+data$track_seg_point_id = seq(1, nrow(data))
+```
 
 The median interval is around 10 minutes, as was to be expected. The mean interval is larger for every month, which can be explained due to larger time gaps when, for example, the cat was at home or wasn't wearing the tracker.
 After the deletion of intervals which are smaller than 9 minutes, the mean value increases but the median value for the intervals remain more or less the same. The removal of intervals smaller than 9 minutes was conducted to simplify the calculation of static and non-static phases, which will be described in the next part of the project.
@@ -566,14 +509,14 @@ data <- data |>
   mutate(timelag = difftime_secs(later=lead(time), now=time)) |>  # recalculate timelag
   filter(!is.na(timelag))
 
-# caclulate speed
-data <- function_speed(data=data, datetime=data$time, geometry=data$geometry)
+# recaclulate timelag and speed
+data <- function_speed(data=data, datetime=data$time)
 
 # create incrementing ID
 data$point_id = seq(1, nrow(data))
 ```
 
-Omitting the points with an interval smaller 9 minutes simplified the speed calculation as well. The highest speed value is around 0.65 m/s or 2.35 km/h, respectively, which is plausible.
+Omitting the points with an interval smaller 9 minutes simplified the speed calculation as well. The highest speed value is around 0.60 m/s or 2.17 km/h, respectively, which is plausible.
 
 ```{r}
 #| label: tbl-speed
@@ -728,7 +671,7 @@ data <- data |>
 
 # keep only selected new columns
 data <-  data |> 
-  dplyr::select(-c(names(sun_times[4:17]), ID)
+  dplyr::select(-c(names(sun_times[4:17]))
 )
 
 # check whether each gps tracking point is grouped
@@ -753,7 +696,7 @@ geom_buffer = st_buffer(data, dist=8)
 
 # select column geometry only and rename as geom_buffer
 geom_buffer <- geom_buffer |>
-  dplyr::select(geometry) |> 
+  dplyr::select(geometry) |>
   dplyr::rename("geom_buffer" = geometry)
 
 # add the buffer geometry to the original data
@@ -813,31 +756,31 @@ for (i in 1:nrow(data)) {
 Create a small sample of the data points to check the method visually.
 
 ```{r}
-data_sample_plot <- data |>
-    st_as_sf(coords = c("E", "N"), crs = 2056, remove = FALSE) |>
-    filter(
-      time >= as.POSIXct("2024-04-01 00:00:00", tz = "Europe/Zurich"), 
-      time < as.POSIXct("2024-04-01 18:00:00", tz = "Europe/Zurich")
-      )
+# data_sample_plot <- data |>
+#     st_as_sf(coords = c("E", "N"), crs = 2056, remove = FALSE) |>
+#     filter(
+#       time >= as.POSIXct("2024-04-01 00:00:00", tz = "Europe/Zurich"), 
+#       time < as.POSIXct("2024-04-01 18:00:00", tz = "Europe/Zurich")
+#       )
 ```
 
 ```{r}
 # set a buffer of 8 m around each gps tracking point
-geom_buffer = st_buffer(data_sample_plot, dist=8)
-
-# select column geometry only and rename as geom_buffer
-geom_buffer <- geom_buffer |>
-  dplyr::select(geometry) |> 
-  dplyr::rename("geom_buffer" = geometry)
+# geom_buffer = st_buffer(data_sample_plot, dist=8)
+# 
+# # select column geometry only and rename as geom_buffer
+# geom_buffer <- geom_buffer |>
+#   dplyr::select(geometry) |> 
+#   dplyr::rename("geom_buffer" = geometry)
 ```
 
 ```{r}
 # create a line between the points which takes into consideration the time stamp
-
-data_line <- data_sample_plot |> 
-  # dissolve to a MULTIPOINT:
-  summarise(do_union = FALSE) |> 
-  st_cast("LINESTRING")
+# 
+# data_line <- data_sample_plot |> 
+#   # dissolve to a MULTIPOINT:
+#   summarise(do_union = FALSE) |> 
+#   st_cast("LINESTRING")
 ```
 
 ```{r}
@@ -846,21 +789,21 @@ data_line <- data_sample_plot |>
 #| warning: false
 #| echo: false
 
-tmap_mode("plot")
-tm_shape(data_line) +
-  tm_lines() +
-  tm_shape(geom_buffer) +
-  tm_fill(col = "blue", alpha=0.5)  +
-  tm_shape(data_sample_plot) +
-  tm_dots(col = "static", palette = c("black", "red")) +
-  tm_text("point_id") +
-  tm_basemap("OpenStreetMap")
+# tmap_mode("plot")
+# tm_shape(data_line) +
+#   tm_lines() +
+#   tm_shape(geom_buffer) +
+#   tm_fill(col = "blue", alpha=0.5)  +
+#   tm_shape(data_sample_plot) +
+#   tm_dots(col = "static", palette = c("black", "red")) +
+#   tm_text("point_id") +
+#   tm_basemap("OpenStreetMap")
 ```
 
 ```{r}
 #| include: false
 
-rm(geom_buffer, data_line, data_sample_plot)
+#rm(geom_buffer, data_line, data_sample_plot)
 ```
 
 # Section 3: Landscape of Fear
@@ -899,100 +842,6 @@ land_cover <- st_intersection(poly, land_cover)
 rm(poly)
 ```
 
-## Group Land Use Data
-
-As there are a lot of categories in the original land cover data set, I group them and create the following new categories:
-- Building
-- Humus
-- Meadow/Orchard
-- Forest
-- Urban Habitat
-- Park
-- Area around building
-- Water
-
-In the end, I check whether each category belongs to a new category.
-
-```{r}
-land_cover$Ground <- NA
-
-land_cover$Ground[grepl("Gebaeude", land_cover$Art_TXT)] <- "Building"
-
-land_cover$Ground[grepl("humusiert", land_cover$Art_TXT)] <- "Humus"
-land_cover$Ground[grepl("humusiert.Acker", land_cover$Art_TXT) |
-                    grepl("humusiert.Intensivkultur", land_cover$Art_TXT)] <- "Meadow/Orchard"
-
-land_cover$Ground[grepl("bestockt", land_cover$Art_TXT)] <- "Forest"
-
-land_cover$Ground[grepl("befestigt.Strasse", land_cover$Art_TXT) |
-                    grepl("befestigt.Verkehr", land_cover$Art_TXT) |            
-                    grepl("humusiert.uebrige_humusierte.Verkehrsteilerflaeche", land_cover$Art_TXT) |
-                    grepl("befestigt.Trottoir", land_cover$Art_TXT) | grepl("befestigt.Bahn", land_cover$Art_TXT)] <- "Street"
-
-land_cover$Ground[grepl("befestigt.uebrige_befestigte.Parkplatz", land_cover$Art_TXT) |
-                    grepl("befestigt.Wasser", land_cover$Art_TXT) |
-                    grepl("befestigt.uebrige", land_cover$Art_TXT)] <- "Sports Field"
-
-land_cover$Ground[grepl("humusiert.Gartenanlage", land_cover$Art_TXT) |
-                    grepl("humusiert.uebrige", land_cover$Art_TXT)] <- "Park"
-
-land_cover$Ground[grepl("humusiert.Gartenanlage.Gartenanlage_Hausumschwung", land_cover$Art_TXT) |
-                    grepl("befestigt.uebrige_befestigte.Hausumschwung", land_cover$Art_TXT)] <- "Area around building"
-
-land_cover$Ground[grepl("Gewaesser", land_cover$Art_TXT)] <- "Water"
-
-# check whether there are no grouped land uses
-land_cover$Art_TXT[which(is.na(land_cover$Ground))]
-
-unique(land_cover$Ground)
-```
-
-## Determine Home
-
-The area which represent home has to be omitted from the land cover data as well.
-
-```{r}
-#| include: false
-
-# determine home
-home <- data.frame(E=c(2684990), N=c(1246068))
-```
-
-```{r}
-#| warning: false
-
-# some data points are recorded at home. these have to be marked as "Home" in the land cover layer.
-
-# ensure correct CRS
-home <- home |>
-  st_as_sf(coords = c('E', 'N'), crs=2056)
-
-# set a buffer of 8m
-home_buffer <- st_buffer(home, dist=8)
-
-# subtract the buffer from polygon
-clipped_lc <- st_difference(land_cover, home_buffer)
-
-# add the same columns as in land_cover
-home_buffer <- home_buffer |> 
-  mutate(Art_TXT = NA,
-         Ground = "Home")
-
-# bind data set together
-land_cover <- rbind(clipped_lc, home_buffer)
-```
-
-```{r}
-# write new geopackage
-st_write(land_cover, "data/land_cover_edit.gpkg", layer = "layer", append=FALSE)
-```
-
-```{r}
-#| include: false
-
-rm(home_buffer, clipped_lc, home)
-```
-
 ## Join GPS Data and Land Cover
 
 ```{r}
@@ -1027,8 +876,6 @@ ggplot() +
   scale_fill_manual(values=c("bisque", "grey27", "forestgreen", "brown", "olivedrab4", "palegreen2", "sienna4", "grey69", "steelblue1")) +
   dark_mode() +
   theme(legend.position = "right", plot.background = element_rect(fill = "grey10"))
-
-#unique(data$Ground)
 ```
 
 For each grid cell an unique ID is generated and the data set is joined with the reassigned GPS tracking points. Furthermore, the points withing each cell are counted.
