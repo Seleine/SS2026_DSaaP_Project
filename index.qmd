@@ -126,8 +126,6 @@ data$time = as.POSIXct(data$time, format = "%Y-%m-%d %H:%M:%S", tz = "Europe/Zur
 #| warning: false
 #| include: false
 
-land_cover <- st_read("data/land_cover_edit.gpkg", layer = "layer")
-
 grd_dominant <- st_read("data/data_grid_dominant.gpkg", layer = "layer")
 ```
 
