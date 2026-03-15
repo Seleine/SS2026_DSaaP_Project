@@ -50,166 +50,12 @@ library(kableExtra)
 library(terra)
 library(smoothr)
 library(adehabitatHR)
-```
 
-# Functions
+source("speed.R")
+source("summary_table.R")
 
-## Function Read
+create_files = FALSE
 
-```{r}
-function_read <- function(path) {
-  
-  data <- st_read(path, layer = "layer")
-  
-  data$month <- factor(data$month,
-                       levels = c("April", "May", "June", "July","August",
-                                  "September", "October", "November",
-                                  ordered = TRUE))
-  return(data)
-}
-```
-
-## Function Time / Element Difference and Speed
-
-```{r}
-# function calculating difference between two data points by second
-difftime_secs <- function(later, now){
-  as.numeric(difftime(later, now, units = "secs"))
-}
-
-# functions for calculating distance by element and time difference.
-distance_by_element <- function(later, now) {
-  as.numeric(
-    st_distance(later, now, by_element = TRUE)
-  )
-}
-
-# function for calculating timelag  
-function_timelag <- function(data, datetime, geometry) {
-  data <- data |>
-    arrange(datetime) |> # make sure order is correct
-    mutate(timelag = difftime_secs(later=lead(datetime), now=datetime),
-           steplength = distance_by_element(later=lead(geometry), now=geometry)
-    )
-  return(data)
-}
-
-# function for calculating speed 
-function_speed <- function(data, datetime) {
-  data <- data |>
-    arrange(datetime) |> # make sure order is correct
-    mutate(speed_ms = (steplength/timelag), #Calculate speed in m/s  
-           speed_kmh = (steplength/timelag)*3.6 # Calculate speed in km/h
-    )
-  return(data)
-}
-```
-
-## Function Summary Table
-
-```{r}
-# function to generate a summary table
-function_table <- function(data) {
-  data_no_geo <- data |>
-    st_drop_geometry() |> 
-    group_by(month) |> 
-    arrange(time) |>
-    rename("Month" = month) |> 
-    mutate(timestamp = difftime_secs(lead(time), time))
-  
-  table <- summarise(data_no_geo,
-                     "Median Interval (min)"= round(median(timestamp, na.rm = TRUE)/60, digits=2),
-                     "Mean Interval (min)"= round(mean(timestamp, na.rm = TRUE)/60, digits=2),
-                     "Min Interval (s)" = min(timestamp, na.rm=TRUE),
-                     "Max Interval (h)" = round(max(timestamp, na.rm=TRUE)/3600, digits=2),
-                     "Count (points)" = n(),
-                     "Count < 9  min" = sum(timestamp < 540, na.rm = TRUE),
-                     "Proportion (%)" =  round(sum(timestamp < 540, na.rm = TRUE) / n(), digits = 2)*100,
-                     .groups = "drop")
-  
-  return(table)
-}
-```
-
-## Function KDE
-
-```{r}
-function_kde <- function(data) {
-  # input: a spatial data frame
-  # This data contains point locations
-  
-  st_geometry(data) <- "geometry"
-  # ensures that the geometry column in the data frame is recognised as the spatial geometry by the sf package.
-  
-  sp_points <- as(data, "Spatial")
-  # converts the sf object data to a SpatialPointsDataFrame (from the sp package),
-  # because the `kernelUD()` function from the adehabitatHR package requires
-  # spatial objects in this format.
-  
-  kud <- kernelUD(sp_points)
-  # probabilistic estimate of space use based on the input point locations
-  # each cell in the surface represents the estimated probability that the animal is present there.
-  
-  range95 <- smooth(st_as_sf(getverticeshr(kud, percent = 95)))
-  range75 <- smooth(st_as_sf(getverticeshr(kud, percent = 75)))
-  range50 <- smooth(st_as_sf(getverticeshr(kud, percent = 50)))
-  range25 <- smooth(st_as_sf(getverticeshr(kud, percent = 25)))
-  range10 <- smooth(st_as_sf(getverticeshr(kud, percent = 10)))
-  # compute homeranges for 95%, 75%, 50%, 25%, 10% of points, objects are returned as spatial polygon data frames
-  # getverticeshr: extracts the home range contour (a polygon) that encompasses that percent of the probability distribution.
-  # st_as_sf(): converts the resulting SpatialPolygonsDataFrame back into an sf object.
-  
-  ranges <- rbind(range95, range75, range50, range25, range10)
-  
-  return(ranges)
-}
-```
-
-## Function Leaflet
-
-```{r}
-fct_leaflet <- function(data, palette_of_choice) {
-  # change to 4326 for leaflet
-  data_wgs <- st_make_valid(st_transform(data, 4326))
-  
-  # ensure area is numeric
-  #kde_phases$area_wgs <- as.numeric(kde_phases_wgs$area)
-  
-  # colour palette in relation to area per phase
-  pal <- colorNumeric(palette = palette_of_choice, domain = data_wgs$area)
-  
-  # initialise leaflet map
-  leaflet_map <- leaflet() |>
-    addProviderTiles(providers$Esri.WorldImagery, group = "World Imagery") |> 
-    addResetMapButton() # add home button
-  
-  # split sf object by day phase
-  variables <- split(data_wgs, data_wgs$Variable)
-  
-  # add one group per phase
-  for (variable_name in names(variables)) { 
-    leaflet_map <- leaflet_map |> 
-      addPolygons(
-        data = variables[[variable_name]], # the different areas (UD) per day phase
-        fillColor = ~pal(area),
-        fillOpacity = 0.4,
-        color = "darkgrey", # line
-        weight = 1, # line
-        group = variable_name, 
-        label = ~paste0("Area: ", round(area, 2)), # while hovering over areas in map
-        highlightOptions = highlightOptions(color = "white", weight = 2, bringToFront = FALSE)
-      )
-  }
-  
-  # radio buttons for home ranges per day phase
-  leaflet_map <- leaflet_map |> 
-    addLayersControl(
-      baseGroups = names(variables),
-      options = layersControlOptions(collapsed = FALSE)
-    )
-  
-  return(leaflet_map)
-}
 ```
 
 # Read, Tidy, and Join Data Frames
@@ -323,7 +169,9 @@ summary_Art_TXT <- land_cover |>
   arrange(Ground)
 
 # write a new csv file
-write.csv(summary_Art_TXT, "data/summary_Art_TXT.csv")
+if (create_files) {
+  write.csv(summary_Art_TXT, "data/summary_Art_TXT.csv")
+}
 ```
 
 ### Remove invalid Data
@@ -450,7 +298,9 @@ data <- setdiff(data, home_points)
 ```{r}
 #| include: FALSE
 
-st_write(data, "data/data_raw.gpkg", layer = "layer", append=FALSE)
+if (create_files) {
+  st_write(data, "data/data_raw.gpkg", layer = "layer", append=FALSE)
+}
 ```
 
 ```{r}
@@ -490,7 +340,7 @@ After the deletion of intervals which are smaller than 9 minutes, the mean value
 #| tbl-cap: Overview of time lags in the gps points data set.
 #| echo: false
 
-table <- function_table(data)
+table <- create_summary_table(data)
 
 knitr::kable(table)
 ```
@@ -502,14 +352,20 @@ rm(table)
 ```
 
 ```{r}
-# remove all points where interval is smaller than 9 minutes and recalculate interval
-data <- data |> 
-  mutate(timelag = difftime_secs(later=lead(time), now=time)) |> 
- filter(!is.na(timelag), timelag > 540) |>
-  mutate(timelag = difftime_secs(later=lead(time), now=time)) |>  # recalculate timelag
-  filter(!is.na(timelag))
+# function for calculating timelag
+data <- function_timelag(data = data, datetime = data$time, geometry = data$geometry)
 
+data <- data |> 
+ filter(!is.na(timelag), timelag > 540)
+```
+
+```{r}
 # recaclulate timelag and speed
+data  <- function_timelag(data = data, datetime = data$time, geometry = data2$geometry)
+
+data <- data |> 
+ filter(!is.na(timelag))
+
 data <- function_speed(data=data, datetime=data$time)
 
 # create incrementing ID
@@ -850,7 +706,9 @@ data <- st_join(x=data, y=land_cover, join=st_intersects)
 ```
 
 ```{r}
-st_write(data, "data/data_processed.gpkg", layer = "layer", append=FALSE)
+if (create_files) {
+  st_write(data, "data/data_processed.gpkg", layer = "layer", append=FALSE)
+}
 ```
 
 ## Uniform Spatial Units: Grid Cells
@@ -965,8 +823,9 @@ unique(grd_unique$Ground)
 
 ```{r}
 #| include: false
-
-st_write(grd_unique, "data/data_grid_dominant.gpkg", layer = "layer", append=FALSE)
+if (create_files) {
+  st_write(grd_unique, "data/data_grid_dominant.gpkg", layer = "layer", append=FALSE)
+}
 ```
 
 

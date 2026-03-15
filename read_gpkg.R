@@ -1,4 +1,4 @@
-function_read <- function(path) {
+read_months_ordered_gpkg <- function(path) {
   
   data <- st_read(path, layer = "layer")
   

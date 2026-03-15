@@ -1,12 +1,13 @@
+source("speed.R")
+
 # function to generate a summary table
-function_table <- function(data) {
+create_summary_table <- function(data) {
   data_no_geo <- data |>
     st_drop_geometry() |> 
     group_by(month) |> 
     arrange(time) |>
     rename("Month" = month) |> 
-    mutate(timestamp = difftime_secs(lead(time), time),
-           timestamp_min = as.integer(difftime_secs(lead(time), time)/60))
+    mutate(timestamp = calculate_timediff_seconds(lead(time), time))
   
   table <- summarise(data_no_geo,
                      "Median Interval (min)"= round(median(timestamp, na.rm = TRUE)/60, digits=2),

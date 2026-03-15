@@ -77,11 +77,9 @@ library(reshape2)
 library(smoothr)
 library(adehabitatHR)
 
-source("functions_dist_secs.R")
-source("function_read.R")
-source("function_kde.R")
-source("function_table.R")
-source("function_leaflet.R")
+source("read_gpkg.R")
+source("kde.R")
+source("summary_table.R")
 
 options(scipen = 999) # disable exponential notation
 ```
@@ -92,7 +90,7 @@ options(scipen = 999) # disable exponential notation
 
 # original GPS tracking points
 # contains gps points and geometry
-data_raw <- function_read("data/data_raw.gpkg")
+data_raw <- read_months_ordered_gpkg("data/data_raw.gpkg")
 
 # rename geom and ensure geometry column
 data_raw <- data_raw |>
@@ -110,7 +108,7 @@ data_raw$time = as.POSIXct(data_raw$time, format = "%Y-%m-%d %H:%M:%S", tz = "Eu
 
 # original GPS tracking points
 # contains gps points, several parameters, and geometry
-data <- function_read("data/data_processed.gpkg")
+data <- read_months_ordered_gpkg("data/data_processed.gpkg")
 
 # rename geom and ensure geometry column
 data <- data |>
@@ -132,7 +130,6 @@ grd_dominant <- st_read("data/data_grid_dominant.gpkg", layer = "layer")
 ```{r}
 grd_dominant
 ```
-
 
 # Material and Methods
 
@@ -173,7 +170,7 @@ Additionally, an area of 103.5 hectares - which includes the home coordinates - 
 
 ### Home Range Calculation
 
-The (within) home range structure was determined using [Kernel Density Estimation (KDE)](https://rpubs.com/titin/KDEinR){target="_blank"} with the `adehabitatHR` package. KDE estimates a probability surface representing the likelihood of the cat being found in a given area - its utilisation distribution (UD). Home ranges were calculated for 95%, 75%, 50%, 25%, and 10% UD. This function generates polygons which enclose the specified proportion of the predicted space use. Further information can be found in `function_kde.R` or [preprocessing.qmd](https://github.zhaw.ch/pages/leporsel/track_module1/preprocessing.html#function-kde){target="_blank"}.
+The (within) home range structure was determined using [Kernel Density Estimation (KDE)](https://rpubs.com/titin/KDEinR){target="_blank"} with the `adehabitatHR` package. KDE estimates a probability surface representing the likelihood of the cat being found in a given area - its utilisation distribution (UD). Home ranges were calculated for 95%, 75%, 50%, 25%, and 10% UD. This function generates polygons which enclose the specified proportion of the predicted space use. Further information can be found in `kde.R` or [preprocessing.qmd](https://github.zhaw.ch/pages/leporsel/track_module1/preprocessing.html#function-kde){target="_blank"}.
 
 The code for the generation of the leaflet plots can be found in `function_leaflet.R` or [preprocessing.qmd](https://github.zhaw.ch/pages/leporsel/track_module1/preprocessing.html#function-leaflet){target="_blank"}.
 
@@ -209,7 +206,7 @@ data_dusk <- data |>
 #| warning: false
 #| echo: false
 
-table <- function_table(data_raw)
+table <- create_summary_table(data_raw)
 
 knitr::kable(table)
 ```
@@ -283,8 +280,8 @@ ggplot() +
 #| include: false
 #| warning: false
 
-kde_prec = function_kde(data=data_prec)
-kde_no_prec = function_kde(data=data_no_prec)
+kde_prec = calculate_kde_from_gps_points(data=data_prec)
+kde_no_prec = calculate_kde_from_gps_points(data=data_no_prec)
 
 kde_prec$Variable = "Precipitation"
 kde_no_prec$Variable = "No Precipitation"
@@ -297,7 +294,7 @@ kde_prec_no_prec = rbind(kde_prec, kde_no_prec)
 #| warning: false
 #| echo: false
 
-fct_leaflet(data = kde_prec_no_prec, palette_of_choice = "viridis")
+plot_kde(data = kde_prec_no_prec, palette_of_choice = "viridis")
 ```
 
 @fig-hr-map-prec shows the home range (KDE) separated into dry and wet periods. The structure within home range during dry periods appears slightly more compact and is shifted toward the center of the map. The range of during precipitation event expands slightly northwards, including coordinates close to home.
@@ -314,16 +311,16 @@ The general home range (with and without precipitation) enclose the botanical ga
 #| include: false
 #| warning: false
 
-kde_night = function_kde(data=data_night)
+kde_night = calculate_kde_from_gps_points(data=data_night)
 kde_night$Variable = "Night"
 
-kde_dawn = function_kde(data=data_dawn)
+kde_dawn = calculate_kde_from_gps_points(data=data_dawn)
 kde_dawn$Variable = "Dawn"
 
-kde_day = function_kde(data=data_day)
+kde_day = calculate_kde_from_gps_points(data=data_day)
 kde_day$Variable = "Day"
 
-kde_dusk = function_kde(data=data_dusk)
+kde_dusk = calculate_kde_from_gps_points(data=data_dusk)
 kde_dusk$Variable = "Dusk"
 
 kde_phases = rbind(kde_night, kde_dawn, kde_day, kde_dusk)
@@ -335,7 +332,7 @@ kde_phases = rbind(kde_night, kde_dawn, kde_day, kde_dusk)
 #| warning: false
 #| echo: false
 
-fct_leaflet(data = kde_phases, palette_of_choice = "plasma")
+plot_kde(data = kde_phases, palette_of_choice = "plasma")
 ```
 
 @fig-hr-map-phases shows the home range structure separated into four phases of the day. The total ranges span from `r round(kde_day$area[1], 2)` (day time) to `r round(kde_night$area[1], 2)` hectares (night time). The hot spot range from `r round(kde_day$area[5], 2)` (day time) to `r round(kde_dawn$area[5], 2)` hectares (dawn). Day and night time show more compact and distinct home range structures compared to dawn and dusk.
@@ -368,8 +365,8 @@ data_not_static_no_prec <- data_not_static |>
 #| include: false
 #| warning: false
 
-kde_static = function_kde(data=data_static)
-kde_not_static = function_kde(data=data_not_static)
+kde_static = calculate_kde_from_gps_points(data=data_static)
+kde_not_static = calculate_kde_from_gps_points(data=data_not_static)
 
 kde_static$Variable = "Static"
 kde_not_static$Variable = "Non Static"
@@ -380,10 +377,10 @@ kde_motion = rbind(kde_static, kde_not_static)
 #| include: false
 #| warning: false
 
-kde_static_prec = function_kde(data=data_static_prec)
-kde_static_no_prec = function_kde(data=data_static_no_prec)
-kde_not_static_prec = function_kde(data=data_not_static_prec)
-kde_not_static_no_prec = function_kde(data=data_not_static_no_prec)
+kde_static_prec = calculate_kde_from_gps_points(data=data_static_prec)
+kde_static_no_prec = calculate_kde_from_gps_points(data=data_static_no_prec)
+kde_not_static_prec = calculate_kde_from_gps_points(data=data_not_static_prec)
+kde_not_static_no_prec = calculate_kde_from_gps_points(data=data_not_static_no_prec)
 
 kde_static_prec$Variable = "Static/Precipitation"
 kde_static_no_prec$Variable = "Static/No Precipitation"
@@ -399,7 +396,7 @@ kde_motion_precipitation = rbind(kde_static_prec, kde_static_no_prec, kde_not_st
 #| warning: false
 #| echo: false
 
-fct_leaflet(data = kde_motion, palette_of_choice = "Oranges")
+plot_kde(data = kde_motion, palette_of_choice = "Oranges")
 ```
 
 @fig-map-motion shows the home range structure of the static (total range: `r round(kde_static$area[1], 2)` hectares) and the non-static data points (total range: `r round(kde_not_static$area[1], 2)` hectares) . The hot spot area of the static points is smaller (`r round(kde_static$area[5], 2)` hectares) than the non-static (`r round(kde_not_static$area[5], 2)` hectares). In general, the static data set lead to a more distinct home range structure.
@@ -438,7 +435,7 @@ rm(data_table)
 #| warning: false
 #| echo: false
 
-fct_leaflet(data = kde_motion_precipitation, palette_of_choice = "Blues")
+plot_kde(data = kde_motion_precipitation, palette_of_choice = "Blues")
 ```
 
 @tbl-motion-precipitation and @fig-map-static-precipitation combine the analysis of movement and precipitation effects analysis. In @tbl-motion-precipitation it is apparent that precipitation events don't have a high influence on the cat's motion behaviour. Of the recorded data points around 60 percent are characterised as non-static, wheres around 40 percent are static.
