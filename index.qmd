@@ -135,8 +135,7 @@ grd_dominant
 
 ## Data Sets
 
-The primary dataset consists of GPS tracking data from a collar, recording the cat’s movement at 10-minute intervals. The data is available as a GPS Exchange Format (.gpx) file from [Tractive](https://tractive.com/de/){target="_blank"}. The raw data, exported in contained 19'907 points recorded from April to November 2024. Additionally, I incorporated meteorological data, including temperature, precipitation, and wind velocity, from the [MeteoSwiss](https://www.meteoswiss.admin.ch/weather/measurement-systems/land-based-stations/automatic-measurement-network.html){target="_blank"} automatic measurement network of the station «Zürich / Fluntern». This data is sampled every 10 minutes and stored in a CSV file. To analyse
-ground cover, I used vector data from the [Amtliche Vermessung of the City of Zurich](https://data.stadt-zuerich.ch/dataset/eea30476-44ca-4b2b-b74c-68a0da5a3956?){target="_blank"}. This dataset classifies areas such as buildings, streets, water, meadows, and forests, allowing spatial analysis of landscape preferences and avoidance.
+The primary dataset consists of GPS tracking data from a collar, recording the cat’s movement at 10-minute intervals. The data is available as a GPS Exchange Format (.gpx) file from [Tractive](https://tractive.com/de/){target="_blank"}. The raw data, exported in contained 19'907 points recorded from April to November 2024. Additionally, I incorporated meteorological data, including temperature, precipitation, and wind velocity, from the [MeteoSwiss](https://www.meteoswiss.admin.ch/weather/measurement-systems/land-based-stations/automatic-measurement-network.html){target="_blank"} automatic measurement network of the station «Zürich / Fluntern». This data is sampled every 10 minutes and stored in a CSV file.
 
 ## Preprocessing
 
@@ -161,12 +160,6 @@ For further investigation, temporal patterns were assessed. The day was divided 
 ### Movement Analysis
 
 The goal of this part of the project is to differentiate stationary from moving phases. According to @tractiveWhyMyTracker2025, the tracking points’ positional inaccuracy is around eight meter. I used this information for determining the phases. For each GPS tracking point I calculated a buffer of a eight meter radius and checked whether the subsequent point is within this radius. If not, the original point was marked as «non-static» and I continued with the next point. If yes, the original point was marked as «static» and the origin was compared to each following point until a point was found which was not within the buffer. For the code and more details see [preprocessing.qmd](https://github.zhaw.ch/pages/leporsel/track_module1/preprocessing.html#section-2-movement-analysis){target="_blank"}. This file also shows an example plot of (non-)static data points.
-
-### Habitat Preference and Avoidance
-
-To evaluate whether the habitat structure correlates with the space use pattern, I integrated the land use data of the [Amtliche Vermessung](https://data.stadt-zuerich.ch/dataset/eea30476-44ca-4b2b-b74c-68a0da5a3956?){target="_blank"}. As the land use data is very detailed, I decided to summarise them (see [Supplementary Material]). Again, I determined the home coordinates and removed all parts of polygons within a radius of eight meters around the coordinates. The GPS data points were joined with the land cover data.
-
-Additionally, an area of 103.5 hectares - which includes the home coordinates - was partitioned into uniform spatial units (20 x 20 m grid cells). I quantified the GPS point density within each cell by overlaying the tracking data on the grid and computed the number of GPS fixes per cell. To generate a meaningful result comparing the density in each cell and the land cover, the most frequent land cover type within each cell had to be determined. For that, the land cover data was joined with the grid cells and the highest area per land cover per cell was calculated and and adopted for each cell. For further information and the code see [preprocessing.qmd](https://github.zhaw.ch/pages/leporsel/track_module1/preprocessing.html#section-3-landscape-of-fear){target="_blank"}.
 
 ### Home Range Calculation
 
@@ -442,120 +435,6 @@ plot_kde(data = kde_motion_precipitation, palette_of_choice = "Blues")
 
 The total home ranges span from `r round(kde_static_no_prec$area[1], 2)` (static / no precipitation) to `r round(kde_not_static_prec$area[1], 2)` hectares (non-static / precipitation).
 
-## Habitat Preference and Avoidance
-
-### Grid Cells
-
-::: panel-tabset
-
-#### Map 
-
-```{r}
-#| label: fig-grid-count-map
-#| fig-cap: The figure shows the count of GPS points per grid cell and the satellite image in the background.
-#| warning: false
-#| echo: false
-
-# k-means breaks for classification
-kmeans_breaks <- classIntervals(grd_dominant$Count, n = 5, style = "kmeans")
-pal <- colorBin(brewer.pal(5, "YlOrRd"), bins = kmeans_breaks$brks)
-
-# transform CRS for leaflet
-grd_dominant_wgs <- st_transform(grd_dominant, crs = 4326)
-
-# create the leaflet map
-leaflet(grd_dominant_wgs)  |> 
-  addProviderTiles(providers$Esri.WorldImagery) |>
-  setView(lng = 8.56182, lat = 47.35839, zoom = 15) |>  # initial view
-  addPolygons(
-    fillColor = ~pal(Count),
-    weight = 1, # grid lines
-    opacity = 1, # grid lines
-    color = "black", # grid lines
-    fillOpacity = 0.4, # grid cells
-    label = ~paste("GPS Count", Count)) |>
-  addLegend(
-    pal = pal,
-    values = ~Count,
-    title = "GPS Count",
-    position = "bottomright"
-  ) |>
-  addResetMapButton() 
-```
-
-```{r}
-#| include: false
-
-rm(grd_dominant_wgs)
-```
-
-#### Count 
-
-```{r}
-#| label: fig-barplot-grid-count
-#| fig-cap: The figure shows the counts of points per grid cell (20 * 20 m) per land cover category.
-#| warning: false
-#| echo: false
-
-grd_dominant |> 
-  group_by(Ground) |> 
-  summarise(total_count = sum(Count), .groups = "drop") |> 
-  arrange(desc(total_count)) |> 
-  ggplot(aes(x = reorder(Ground, -total_count), y = total_count, fill = Ground)) +
-    geom_col() +
-    labs(y = "Count", x = "") +
-    scale_fill_manual(values = c("bisque", "grey27", "forestgreen", "olivedrab4", "palegreen2", "sienna4", "grey69", "steelblue1")) +
-    dark_mode() +
-    theme(plot.background = element_rect(fill = "grey10"),
-          axis.text.x = element_blank(),
-          axis.ticks.x = element_blank())
-```
-
-:::
-
-On @fig-grid-count-map one can see the number of GPS tracking points within each grid cell, ranging from 1 to 168 points. @fig-barplot-grid-count shows the count of data points within a grid cell jointed with land cover types.
-
-### GPS Points
-
-::: panel-tabset
-
-#### Map 
-
-```{r}
-#| label: fig-point-count-map
-#| fig-cap: The figure shows the GPS tracking points.
-#| warning: false
-#| echo: false
-
-tmap_mode("plot")
-tm_basemap("Esri.WorldImagery") +
-  tm_shape(data, name = "Home Range") +
-  tm_dots(col = "black", alpha = 0.6, cluster = TRUE) +
-  tm_layout(legend.text.align = "left")
-```
-
-#### Count 
-
-```{r}
-#| label: fig-barplot-points-count
-#| fig-cap: The figure shows the counts of GPS points per land cover category.
-#| warning: false
-#| echo: false
-
-ggplot(data=data, aes(x=fct_infreq(Ground), fill=Ground)) +
-  geom_bar() +
-  labs(y="Count", x="") +
-  scale_fill_manual(values=c("bisque", "grey27", "forestgreen", "olivedrab4", "palegreen2", "sienna4", "grey69", "steelblue1")) +
-    dark_mode() +
-    theme(plot.background = element_rect(fill = "grey10"),
-          axis.text.x = element_blank(),
-          axis.ticks.x = element_blank())
-```
-
-:::
-
-@fig-point-count-map and @fig-barplot-points-count represent similar information as @fig-grid-count-map and @fig-barplot-grid-count, but they differ in their data basis. @fig-point-count-map shows the actual GPS tracking points instead of point aggregated in grid cells. @fig-barplot-points-count presents the count of data points per land cover type.
-
 # Discussion
 
 ## Influence of Precipitation and Temporal Factors on Home‑Range Structure
@@ -574,25 +453,10 @@ Overall, the spatial patterns observed in the static data set resemble those rec
 
 @tbl-motion-precipitation indicates that precipitation does not have a significant effect on the cat’s movement behaviour in this dataset. However, since the table lacks spatial context and detailed behavioural categorisation, conclusions of these findings remains limited.
 
-## Environmental Features Associated with Habitat Use and Avoidance
-
-@fig-grid-count-map reveals that uncovered places in the park (botanical garden) are avoided. A different pattern is seen on the meadow in the east of the botanical garden. The area is mostly uncovered, but at the same time mainly free of human activity (in contrast to the botanical garden). Although, as the area is used as a meadow to harvest grass for hay, the grass is often very high and therefore generates some cover nonetheless. Furthermore, the rather untouched area increases the appearance of mice, which is obviously another attraction for the cat. The results suggest that the movement pattern is shaped by the availability of shelter and prey resources and some focus around hot spots which are visited frequently. This is also seen in @barrattHomeRangeSize1997. The home range extends more on the green areas, which aligns with literature (@metsersCatexclusionZonesRural2010, @thomasRangingCharacteristicsDomestic2014, @dunfordSeasonalHabitatSelection2024).
-
-Several GPS points in the northwestern part of the home range are located along a street, which may indicate the cat’s route to the park area near the church Neumünster, which is on the other side of the street. In contrast, the major road (Forchstrasse) located in the northern portion of the home range appears to be consistently avoided. Analysis of land cover preferences, as shown in @fig-barplot-points-count, suggests that the cat predominantly uses meadows/orchards, areas around buildings (often gardens), and parks. Sports fields (which has the lowest total area in general) exhibit the lowest number of GPS points. Streets, despite having a relatively large area within the surroundings, are associated with only a few tracking points, further indicating possible avoidance behaviour (cf. [project PTED](https://github.zhaw.ch/pages/leporsel/PTED_project2/#land-cover-preference){target="_blank"}).
-
-A related pattern is displayed by @fig-point-count-map, which reveals the actual GPS tracking points associated with the land cover data set. @fig-barplot-grid-count results in a similar outcome as @fig-barplot-points-count. Only the categories Street and Forest are exchanged. This might suggest that a grid cell size of 20 * 20 meters is too imprecise to detect (smaller) streets accurately.
-
-Furthermore, @fig-barplot-points-count highlights a limitation related to the accuracy of the GPS tracker. In contrast, the representation of non-meaningful land cover types in @fig-barplot-grid-count (e.g. water and buildings) can be linked to the methodological approach, where the dominant land cover type within each grid cell is assigned to the entire cell. However, the inconsistencies represented in @fig-barplot-points-count might be due to GPS inaccuracy. As reported by @tractiveWhyMyTracker2025, the average positional error of the GPS tracker is approximately 8 meters, which can lead to misclassification of land cover types at fine spatial scales.
-
 ## Limitations
 
 -   While 10-minute median time stamps benefit tracker battery life,
     they hinder analyses of sudden behavioural changes like hunting.
-
--   It is important to consider the inaccuracies of both GPS and land
-    cover data. The [City of
-    Zurich](https://data.stadt-zuerich.ch/dataset/eea30476-44ca-4b2b-b74c-68a0da5a3956?){target="_blank"}
-    reports an inaccuracy of ± 10 to 15 cm for the land cover data. According to @tractiveWhyMyTracker2025, the tracking points' positional inaccuracy is around 8 m.
 
 -   The analysis of precipitation effects has some limitations. Important considerations for this
     analysis includes the cat not wearing the tracker
@@ -652,25 +516,6 @@ The following R packages were used in the project:
 -   smoothr (@strimas-mackeySmoothrSmoothTidy2025)
 
 ## Supplementary Material
-
-### Grouping of Land Cover Data
-
-```{r}
-#| include: false
-
-summary_Art_TXT <- read.delim("data/summary_Art_TXT.csv", sep=",", row.names=1)
-```
-
-```{r}
-#| label: tbl-summary-landcover
-#| tbl-cap: This table shows how the raw data from the Amtliche Vermessung was grouped for the study.
-#| warning: false
-#| echo: false
-
-knitr::kable(summary_Art_TXT)
-
-rm(summary_Art_TXT)
-```
 
 ### Overview of Home Range Estimation
 
