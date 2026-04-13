@@ -347,6 +347,7 @@ dependencies = [
     { name = "geopandas" },
     { name = "numpy" },
     { name = "pytest" },
+    { name = "suncalc" },
 ]
 
 [package.metadata]
@@ -354,7 +355,17 @@ requires-dist = [
     { name = "geopandas", specifier = "==1.1.3" },
     { name = "numpy", specifier = ">=2.4.4" },
     { name = "pytest", specifier = "==9.0.2" },
+    { name = "suncalc", specifier = ">=0.1.3" },
 ]
+
+[[package]]
+name = "suncalc"
+version = "0.1.3"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "numpy" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/c2/ff/f66239517089f07ee32aa737069127790c0d7df1f4a12bd0875208dc89d2/suncalc-0.1.3.tar.gz", hash = "sha256:9f8834da86870b94ab8c5ab978963d7c44b8f0addce63199e53c5c5c8b0d49f6", size = 13147, upload-time = "2023-04-19T00:04:17.665Z" }
 
 [[package]]
 name = "tzdata"
