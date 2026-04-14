@@ -5,3 +5,4 @@
 .venv
 .idea
 /home_coords.py
+*.html

@@ -10,3 +10,4 @@ columns_of_choice = ["track_seg_point_id", "time", "geometry"]
 time_zone = "Europe/Zurich"
 max_speed_kmh = 48
 min_timelag_s = 540
+buffer_intersection = 8

@@ -6,6 +6,7 @@ import home_coords
 from read_gps_data import read_gps_data
 from calculate_phases_of_the_day import calculate_phases_of_the_day
 from remove_home_points import remove_home_points
+from static_not_static import create_static_column, sample_plot_static_not_static
 
 ########################################
 # Read in Meteo Data
@@ -85,6 +86,9 @@ del home_buffer
 # Movement Analysis
 ########################################
 
+data = create_static_column(data = data, buffer = customised_variables.buffer_intersection)
+
+sample_plot_static_not_static(data = data, start_date = "2024-04-01 00:00:00", end_date = "2024-04-01 18:00:00")
 
 ########################################
 # KDE Plot Movement Analysis
