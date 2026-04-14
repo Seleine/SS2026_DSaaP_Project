@@ -4,5 +4,5 @@
 .Ruserdata
 .venv
 .idea
-/home_coords.py
 *.html
+/home_coords.py
