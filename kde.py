@@ -198,7 +198,7 @@ def contour_to_polygons(contour: np.ndarray, xi: np.ndarray, yi: np.ndarray) -> 
         return None
 
 
-def extract_contour_polygons(xi: np.ndarray, yi: np.ndarray, Zi_norm: np.ndarray, crs: pyproj.CRS, percentiles: list[int] = [95, 75, 50, 25, 10]) -> gpd.GeoDataFrame:
+def extract_contour_polygons(xi: np.ndarray, yi: np.ndarray, Zi_norm: np.ndarray, variable_name: str, crs: pyproj.CRS, percentiles: list[int] = [95, 75, 50, 25, 10]) -> gpd.GeoDataFrame:
     """
     Extract contour polygons for each percentile.
 
@@ -244,7 +244,8 @@ def extract_contour_polygons(xi: np.ndarray, yi: np.ndarray, Zi_norm: np.ndarray
             records.append({
                 "percent": pct,
                 "geometry": merged,
-                "area_km2": merged.area / 1e6
+                "area_km2": merged.area / 1e6,
+                "Variable": variable_name
             })
 
     ########################
@@ -255,13 +256,14 @@ def extract_contour_polygons(xi: np.ndarray, yi: np.ndarray, Zi_norm: np.ndarray
     return ranges
 
 
-def calculate_kde_from_gps_points(data: gpd.GeoDataFrame, percentiles: list[int] = [95, 75, 50, 25, 10], grid_size: int = 200) -> gpd.GeoDataFrame:
+def calculate_kde_from_gps_points(data: gpd.GeoDataFrame, variable_name: str, percentiles: list[int] = [95, 75, 50, 25, 10], grid_size: int = 200) -> gpd.GeoDataFrame:
     """
     Calculate Kernel Density Estimation from GPS Points.
 
     Args:
         data (GeoDataFrame): Input GeoDataFrame with point geometries
                              in a projected metric CRS (e.g. EPSG:2056).
+        variable_name (str): Input name for variable.
         percentiles (list[int]): Probability contour levels to extract.
                                  Defaults to [95, 75, 50, 25, 10].
         grid_size (int): Resolution of the KDE evaluation grid.
@@ -284,4 +286,4 @@ def calculate_kde_from_gps_points(data: gpd.GeoDataFrame, percentiles: list[int]
     Zi = evaluate_kde(kde, Xi, Yi)
     Zi_norm = normalise_kde(Zi)
 
-    return extract_contour_polygons(xi=xi, yi=yi, Zi_norm=Zi_norm, crs=data.crs, percentiles=percentiles)
+    return extract_contour_polygons(xi=xi, yi=yi, Zi_norm=Zi_norm, variable_name=variable_name, crs=data.crs, percentiles=percentiles)
