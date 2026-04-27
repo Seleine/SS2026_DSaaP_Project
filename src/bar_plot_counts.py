@@ -35,7 +35,7 @@ def barplot_counts(data: gpd.GeoDataFrame, x_variable: str, title: str):
     ax = sns.countplot(data, x=x_variable)
     ax.set_title(title)
 
-    output_path = os.path.abspath("barplot_count_data_points.png")
+    output_path = os.path.abspath("../plots/barplot_count_data_points.png")
     ax.get_figure().savefig(output_path, bbox_inches="tight")
     plt.close()
 

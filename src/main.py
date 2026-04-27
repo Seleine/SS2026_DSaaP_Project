@@ -5,13 +5,13 @@ import customised_variables
 import geopandas as gpd
 import home_coords
 from read_gps_data import read_gps_data
-from calculate_phases_of_the_day import calculate_phases_of_the_day
+from src.calculate_phases_of_the_day import calculate_phases_of_the_day
 from remove_home_points import remove_home_points
 from static_not_static import create_static_column, sample_plot_static_not_static
 from speed import calculate_timelag_steplength_speed
 from summary_table import summary_table
-from kde import calculate_kde_from_gps_points
-from kde_plot import plot_kde
+from src.kde import calculate_kde_from_gps_points
+from src.kde_plot import plot_kde
 
 
 ########################################

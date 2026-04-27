@@ -4,7 +4,7 @@ import geopandas as gpd
 from datetime import datetime
 import numpy as np
 from geopandas.testing import assert_geodataframe_equal
-from speed import calculate_timelag_steplength_speed
+from src.speed import calculate_timelag_steplength_speed
 
 
 def test_calculate_timelag_steplength_speed_should_return_new_geodataframe_when_input_valid():
