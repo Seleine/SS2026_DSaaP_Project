@@ -137,7 +137,7 @@ def plot_kde(data: gpd.pd.DataFrame) -> folium.Map:
     # Fit map to data extent
     m.fit_bounds(get_data_extend(data_wgs = data_wgs))
 
-    output_html = os.path.abspath("home_range_explore.html")
+    output_html = os.path.abspath("../plots/home_range_explore.html")
     m.save(output_html)
     webbrowser.open(f"file://{output_html}")
 

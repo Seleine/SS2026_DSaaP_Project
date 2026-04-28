@@ -6,5 +6,5 @@
 .idea
 *.html
 *.png
-/home_coords.py
+src/home_coords.py
 .coverage
