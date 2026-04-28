@@ -77,4 +77,8 @@ def read_gps_data(file_path: str, gpx_layer: str, time_zone: str) -> gpd.GeoData
     # ensure correct CRS
     merged_data = merged_data.to_crs(customised_variables.CRS)
 
+    if len(merged_data) < 50:
+        raise ValueError(
+            f"Only {len(merged_data)} GPS points found after cleaning. At least 50 are required for reliable KDE estimation.")
+
     return merged_data
