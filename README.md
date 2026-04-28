@@ -26,9 +26,11 @@ Open street map is used as base layer.
 Brief overview of the repository layout.
 
 ```
-data/        input datasets
-scripts/     analysis scripts
-results/     output files and figures
+data_tractive/      input datasets from tractive
+src/                analysis scripts
+plots/              output figures
+tests/              test files
+.github/workflows   folder containing GitHub actions
 ```
 
 ## Set Up Project
@@ -39,8 +41,8 @@ Describe how to set up the environment and dependencies.
 Example:
 
 ```
-git clone https://github.com/username/project-name.git
-cd project-name
+git clone https://github.com/Seleine/SS2026_DSaaP_Project.git
+cd SS2026_DSaaP_Project
 
 conda env create -f environment.yml
 conda activate project-env
