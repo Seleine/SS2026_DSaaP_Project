@@ -7,11 +7,13 @@ import home_coords
 from read_gps_data import read_gps_data
 from calculate_phases_of_the_day import calculate_phases_of_the_day
 from remove_home_points import remove_home_points
-from static_not_static import create_static_column, sample_plot_static_not_static
+from static_not_static import create_static_column
+from static_not_static_plot import sample_plot_static_not_static
 from speed import calculate_timelag_steplength_speed
 from summary_table import summary_table
 from kde import calculate_kde_from_gps_points
 from kde_plot import plot_kde
+from bar_plot_counts import barplot_counts
 
 
 ########################################
@@ -82,6 +84,8 @@ summary_table(data = data, datetime_col = "time")
 # KDE Plot Phases of the Day
 ########################################
 
+barplot_counts(data = data, x_variable = "dayphase", title = "Number of Data Points per Day Phase", plot_name = "dayphases")
+
 kde_night = calculate_kde_from_gps_points(data = data[data["dayphase"] == "Nighttime"], variable_name="Nighttime")
 kde_day = calculate_kde_from_gps_points(data = data[data["dayphase"] == "Daytime"], variable_name="Daytime")
 kde_dusk = calculate_kde_from_gps_points(data = data[data["dayphase"] == "Dusk"], variable_name="Dusk")
@@ -89,7 +93,7 @@ kde_dawn = calculate_kde_from_gps_points(data = data[data["dayphase"] == "Dawn"]
 
 kde_dayphases = gpd.pd.concat([kde_night, kde_day, kde_dusk, kde_dawn])
 
-plot_kde(data = kde_dayphases)
+plot_kde(data = kde_dayphases, plot_name = "kde_dayphases")
 
 ########################################
 # Movement Analysis
@@ -103,12 +107,14 @@ sample_plot_static_not_static(data = data, start_date = "2024-04-01 00:00:00", e
 # KDE Plot Movement Analysis
 ########################################
 
+barplot_counts(data = data, x_variable = "static", title = "Number of Data Points per Movement Phase", plot_name = "movement")
+
 kde_static = calculate_kde_from_gps_points(data = data[data["static"] == "Static"], variable_name="Static")
 kde_not_static = calculate_kde_from_gps_points(data = data[data["static"] == "Not Static"], variable_name="Not Static")
 
 kde_movement = gpd.pd.concat([kde_static, kde_not_static])
 
-plot_kde(data = kde_movement)
+plot_kde(data = kde_movement, plot_name = "kde_movement")
 
 ########################################
 # Read in Meteo Data
