@@ -65,7 +65,7 @@ def get_data_extend(data_wgs: gpd.GeoDataFrame) -> list[list[float]]:
     bounds = data_wgs.total_bounds
     return [[bounds[1], bounds[0]], [bounds[3], bounds[2]]]
 
-def plot_kde(data: gpd.pd.DataFrame) -> folium.Map:
+def plot_kde(data: gpd.pd.DataFrame, plot_name: str) -> folium.Map:
     """
     Plot kernel density estimation (KDE) home ranges as an interactive leaflet map.
 
@@ -78,6 +78,7 @@ def plot_kde(data: gpd.pd.DataFrame) -> folium.Map:
             - geometry: Polygon or MultiPolygon geometries.
             - area_km2: Numeric column with the area_km2 of each polygon (km²).
             - Variable: Categorical column used to split layers.
+    plot_name: string of plot name
 
     Returns:
     folium.Map: The constructed folium map object.
@@ -137,7 +138,7 @@ def plot_kde(data: gpd.pd.DataFrame) -> folium.Map:
     # Fit map to data extent
     m.fit_bounds(get_data_extend(data_wgs = data_wgs))
 
-    output_html = os.path.abspath("../plots/home_range_explore.html")
+    output_html = os.path.abspath(f"../plots/{plot_name}.html")
     m.save(output_html)
     webbrowser.open(f"file://{output_html}")
 
