@@ -1,8 +1,8 @@
 import geopandas as gpd
 import pandas as pd
-from datetime import datetime
 
-def summary_table(data: gpd.GeoDataFrame, datetime_col: str) -> pd.DataFrame:
+
+def summary_table(data: gpd.GeoDataFrame, datetime_col: str) -> None:
     """
     Create a summary table of the data to get an overview of the data quality.
 
