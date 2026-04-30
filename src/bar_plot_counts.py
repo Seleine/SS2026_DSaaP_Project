@@ -4,7 +4,7 @@ import os
 import webbrowser
 import matplotlib.pyplot as plt
 
-def barplot_counts(data: gpd.GeoDataFrame, x_variable: str, title: str):
+def barplot_counts(data: gpd.GeoDataFrame, x_variable: str, title: str, plot_name: str):
     """
     Creates and saves a count bar plot for a given variable in a GeoDataFrame,
     then opens it in the default web browser.
@@ -17,6 +17,7 @@ def barplot_counts(data: gpd.GeoDataFrame, x_variable: str, title: str):
         The column name in `data` to count and display on the x-axis.
     title: str
         The title to display on the plot.
+    plot_name: string of plot name
 
     Raises
     ------
@@ -35,7 +36,7 @@ def barplot_counts(data: gpd.GeoDataFrame, x_variable: str, title: str):
     ax = sns.countplot(data, x=x_variable)
     ax.set_title(title)
 
-    output_path = os.path.abspath("../plots/barplot_count_data_points.png")
+    output_path = os.path.abspath(f"../plots/barplot_count_data_points_{plot_name}.png")
     ax.get_figure().savefig(output_path, bbox_inches="tight")
     plt.close()
 
