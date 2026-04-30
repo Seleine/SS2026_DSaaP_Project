@@ -276,6 +276,10 @@ def calculate_kde_from_gps_points(data: gpd.GeoDataFrame, variable_name: str, pe
                       - geometry: polygon or multipolygon of the home range
                       - area_km2 (float): area of the home range in km2
     """
+
+    if len(data) < 50:
+        raise ValueError(f"At least 50 GPS points required for reliable KDE estimation, got {len(data)}.")
+
     if percentiles is None:
         percentiles = [95, 75, 50, 25, 10]
 
