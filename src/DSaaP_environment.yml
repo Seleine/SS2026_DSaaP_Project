@@ -1,0 +1,19 @@
+name: DSAAP_env
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - numpy
+  - pandas
+  - scipy
+  - matplotlib
+  - seaborn
+  - geopandas
+  - shapely
+  - pyproj
+  - folium
+  - branca
+  - scikit-image
+  - pip
+  - pip:
+      - suncalc

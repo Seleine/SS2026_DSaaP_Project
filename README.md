@@ -48,3 +48,27 @@ The file `customised_variables.py` contains several variables which can be edite
 - buffer_intersection: For determining (non-)static phases, a buffer around each data point is needed.
 
 
+## How to: set up
+### Git Repo
+Clone directly inside VS Code (GUI)
+1. Open VS Code
+2. Press Ctrl+Shift+P / Cmd+Shift+P
+3. Type Git: Clone
+4. Paste the repo URL: https://github.com/Seleine/SS2026_DSaaP_Project
+5. Choose a folder on you local computer to save the project
+6. Click Open
+
+### Environment setup
+#### Exact reproduction (recommended)
+Use our frozen version of the environment. 
+```bash
+conda env create -f environment.lock.yml
+conda activate DSAAP_env
+```
+
+#### Download newest version of libraries
+Use the .yml file to set up the environment. This will install the latest package versions.
+```bash
+conda env create -f environment.yml
+conda activate DSAAP_env
+```
