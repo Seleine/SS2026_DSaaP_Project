@@ -8,3 +8,4 @@
 *.png
 src/home_coords.py
 .coverage
+__pycache__/
