@@ -6,7 +6,9 @@ import webbrowser
 import os
 
 
-def _filter_by_time(data: gpd.GeoDataFrame, start_date: str, end_date: str, time_zone: str) -> gpd.GeoDataFrame:
+def _filter_by_time(
+    data: gpd.GeoDataFrame, start_date: str, end_date: str, time_zone: str
+) -> gpd.GeoDataFrame:
     """
     Filter a GeoDataFrame to a specific time range.
 
@@ -41,8 +43,9 @@ def _filter_by_time(data: gpd.GeoDataFrame, start_date: str, end_date: str, time
         raise ValueError("GeoDataFrame must contain a 'time' column.")
 
     return data[
-        (data["time"] >= pd.Timestamp(start_date, tz=time_zone)) &
-        (data["time"] < pd.Timestamp(end_date, tz=time_zone))].copy()
+        (data["time"] >= pd.Timestamp(start_date, tz=time_zone))
+        & (data["time"] < pd.Timestamp(end_date, tz=time_zone))
+    ].copy()
 
 
 def _create_track_line(data: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
@@ -70,12 +73,11 @@ def _create_track_line(data: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     if not isinstance(data, gpd.GeoDataFrame):
         raise TypeError(f"Expected a GeoDataFrame, got {type(data).__name__}.")
     if len(data) < 2:
-        raise ValueError(f"At least 2 points are required to create a LineString, got {len(data)}.")
+        raise ValueError(
+            f"At least 2 points are required to create a LineString, got {len(data)}."
+        )
 
-    return gpd.GeoDataFrame(
-        geometry=[LineString(data.geometry.tolist())],
-        crs=data.crs
-    )
+    return gpd.GeoDataFrame(geometry=[LineString(data.geometry.tolist())], crs=data.crs)
 
 
 def _build_static_map(data: gpd.GeoDataFrame):
@@ -117,12 +119,17 @@ def _build_static_map(data: gpd.GeoDataFrame):
         categories=["Static", "Not Static"],
         cmap=["red", "black"],
         tooltip=["track_seg_point_id", "static", "time"],
-        name="Points"
+        name="Points",
     )
     return m
 
 
-def sample_plot_static_not_static(data: gpd.GeoDataFrame, start_date: str, end_date: str, time_zone: str = config.time_zone) -> None:
+def sample_plot_static_not_static(
+    data: gpd.GeoDataFrame,
+    start_date: str,
+    end_date: str,
+    time_zone: str = config.time_zone,
+) -> None:
     """
     Generate and open an interactive map of static vs. non-static GPS points.
 
@@ -157,6 +164,6 @@ def sample_plot_static_not_static(data: gpd.GeoDataFrame, start_date: str, end_d
 
     data_sample_plot = _filter_by_time(data, start_date, end_date, time_zone)
     m = _build_static_map(data_sample_plot)
-    output_html = os.path.abspath(f"../plots/sample_plot_static.html")
+    output_html = os.path.abspath("../plots/sample_plot_static.html")
     m.save(output_html)
     webbrowser.open(f"file://{output_html}")

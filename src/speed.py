@@ -1,5 +1,5 @@
-from datetime import datetime
 import geopandas as gpd
+
 
 def _calculate_timediff_seconds(later: gpd.GeoSeries, now: gpd.pd.Series) -> float:
     """
@@ -23,7 +23,9 @@ def _calculate_timediff_seconds(later: gpd.GeoSeries, now: gpd.pd.Series) -> flo
     return timediff.dt.total_seconds()
 
 
-def _calculate_distance_by_element(geom_a: gpd.GeoSeries, geom_b: gpd.GeoSeries) -> float:
+def _calculate_distance_by_element(
+    geom_a: gpd.GeoSeries, geom_b: gpd.GeoSeries
+) -> float:
     """
     Calculate the distance by element.
 
@@ -45,7 +47,9 @@ def _calculate_distance_by_element(geom_a: gpd.GeoSeries, geom_b: gpd.GeoSeries)
     return distdiff
 
 
-def calculate_timelag_steplength_speed(data: gpd.GeoDataFrame, datetime_col: str, geometry_col: str) -> gpd.GeoDataFrame:
+def calculate_timelag_steplength_speed(
+    data: gpd.GeoDataFrame, datetime_col: str, geometry_col: str
+) -> gpd.GeoDataFrame:
     """
     Calculate the time lag, steplength, and speed between two GPS points.
 
@@ -69,8 +73,15 @@ def calculate_timelag_steplength_speed(data: gpd.GeoDataFrame, datetime_col: str
 
     data = data.sort_values(by=datetime_col)
 
-    data["timelag"] = _calculate_timediff_seconds(later=data[datetime_col].shift(-1), now=data[datetime_col])
-    data["steplength"] = round(_calculate_distance_by_element(geom_a=data[geometry_col], geom_b=data[geometry_col].shift(-1)), 3)
+    data["timelag"] = _calculate_timediff_seconds(
+        later=data[datetime_col].shift(-1), now=data[datetime_col]
+    )
+    data["steplength"] = round(
+        _calculate_distance_by_element(
+            geom_a=data[geometry_col], geom_b=data[geometry_col].shift(-1)
+        ),
+        3,
+    )
     data["speed_ms"] = round(data["steplength"] / data["timelag"], 3)
     data["speed_kmh"] = round(data["speed_ms"] * 3.6, 3)
 

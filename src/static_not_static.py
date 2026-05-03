@@ -22,7 +22,9 @@ def _buffers_intersect(data: gpd.GeoDataFrame, idx_a: int, idx_b: int) -> bool:
     if "geom_buffer" not in data.columns:
         raise ValueError("GeoDataFrame must contain a 'geom_buffer' column.")
     if not (0 <= idx_a < len(data)) or not (0 <= idx_b < len(data)):
-        raise IndexError(f"Indices {idx_a} and {idx_b} must be within bounds of the GeoDataFrame (len={len(data)}).")
+        raise IndexError(
+            f"Indices {idx_a} and {idx_b} must be within bounds of the GeoDataFrame (len={len(data)})."
+        )
 
     return data["geom_buffer"].iloc[idx_a].intersects(data["geom_buffer"].iloc[idx_b])
 

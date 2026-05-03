@@ -20,3 +20,11 @@ jobs:
 
       - name: Run tests
         run: uv run pytest tests
+
+      - name: Run ruff linter
+        if: always()
+        uses: astral-sh/ruff-action@v3
+
+      - name: Run ruff formatter
+        if: always()
+        run: ruff format --check --diff

@@ -4,6 +4,7 @@ import glob
 import config
 import os
 
+
 def read_gps_data(file_path: str, gpx_layer: str, time_zone: str) -> gpd.GeoDataFrame:
     """
     Read and merge all GPX files from a directory into a single GeoDataFrame.
@@ -38,9 +39,12 @@ def read_gps_data(file_path: str, gpx_layer: str, time_zone: str) -> gpd.GeoData
     # check if time zone is valid
     try:
         import zoneinfo
+
         zoneinfo.ZoneInfo(time_zone)
     except zoneinfo.ZoneInfoNotFoundError:
-        raise ValueError(f"Invalid time zone: '{time_zone}'. Use a valid tz database string, e.g. 'Europe/Zurich'.")
+        raise ValueError(
+            f"Invalid time zone: '{time_zone}'. Use a valid tz database string, e.g. 'Europe/Zurich'."
+        )
     # check if gpx_layer is valid
     valid_layers = ["track_points", "tracks", "waypoints", "routes"]
     if gpx_layer not in valid_layers:
@@ -58,7 +62,7 @@ def read_gps_data(file_path: str, gpx_layer: str, time_zone: str) -> gpd.GeoData
     merged_data = merged_data[config.columns_of_choice]
 
     # ensure correct data type and time zone for time column
-    merged_data["time"] =  pd.to_datetime(merged_data["time"]).dt.tz_convert(time_zone)
+    merged_data["time"] = pd.to_datetime(merged_data["time"]).dt.tz_convert(time_zone)
 
     # remove duplicated times
     merged_data = merged_data.drop_duplicates(subset=["time"])
@@ -67,9 +71,24 @@ def read_gps_data(file_path: str, gpx_layer: str, time_zone: str) -> gpd.GeoData
     merged_data["Month"] = pd.to_datetime(merged_data["time"]).dt.month_name().str[:]
 
     # ensure correct order of months
-    month_order = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
+    month_order = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+    ]
 
-    merged_data["Month"] = pd.Categorical(merged_data["Month"], categories=month_order, ordered=True)
+    merged_data["Month"] = pd.Categorical(
+        merged_data["Month"], categories=month_order, ordered=True
+    )
 
     # ensure correct geometry column
     merged_data = merged_data.set_geometry("geometry")
@@ -79,6 +98,7 @@ def read_gps_data(file_path: str, gpx_layer: str, time_zone: str) -> gpd.GeoData
 
     if len(merged_data) < 50:
         raise ValueError(
-            f"Only {len(merged_data)} GPS points found after cleaning. At least 50 are required for reliable KDE estimation.")
+            f"Only {len(merged_data)} GPS points found after cleaning. At least 50 are required for reliable KDE estimation."
+        )
 
     return merged_data

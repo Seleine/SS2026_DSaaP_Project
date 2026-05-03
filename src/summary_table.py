@@ -2,7 +2,7 @@ import geopandas as gpd
 import pandas as pd
 
 
-def summary_table(data: gpd.GeoDataFrame, datetime_col: str) -> None:
+def summary_table(data: gpd.GeoDataFrame, datetime_col: str) -> pd.DataFrame:
     """
     Create a summary table of the data to get an overview of the data quality.
 
@@ -24,20 +24,30 @@ def summary_table(data: gpd.GeoDataFrame, datetime_col: str) -> None:
     data = data.sort_values(by=datetime_col)
 
     data_no_geo = pd.DataFrame(data.drop(columns=data.geometry.name))
-    data_no_geo = data_no_geo.rename(columns={'month': 'Month'})
+    data_no_geo = data_no_geo.rename(columns={"month": "Month"})
 
-    table = (data_no_geo.groupby("Month").agg(
-            **{"Median Interval (min)": ("timelag", lambda x: round(x.median() / 60, 2))},
-            **{"Mean Interval (min)":   ("timelag", lambda x: round(x.mean() / 60, 2))},
-            **{"Min Interval (s)":      ("timelag", "min")},
-            **{"Max Interval (h)":      ("timelag", lambda x: round(x.max() / 3600, 2))},
-            **{"Count (points)":        ("timelag", "count")},
-            **{"Count < 9 min":         ("timelag", lambda x: (x < 540).sum())},
-            **{"Proportion (%)":        ("timelag", lambda x: round((x < 540).sum() / len(x), 2) * 100)},
+    table = (
+        data_no_geo.groupby("Month")
+        .agg(
+            **{
+                "Median Interval (min)": (
+                    "timelag",
+                    lambda x: round(x.median() / 60, 2),
+                )
+            },
+            **{"Mean Interval (min)": ("timelag", lambda x: round(x.mean() / 60, 2))},
+            **{"Min Interval (s)": ("timelag", "min")},
+            **{"Max Interval (h)": ("timelag", lambda x: round(x.max() / 3600, 2))},
+            **{"Count (points)": ("timelag", "count")},
+            **{"Count < 9 min": ("timelag", lambda x: (x < 540).sum())},
+            **{
+                "Proportion (%)": (
+                    "timelag",
+                    lambda x: round((x < 540).sum() / len(x), 2) * 100,
+                )
+            },
         )
         .reset_index()
     )
 
     print(table)
-
-
