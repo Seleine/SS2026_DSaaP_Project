@@ -325,7 +325,9 @@ def calculate_kde_from_gps_points(
         raise TypeError("Argument data must be a gpd.GeoDataFrame")
     if not isinstance(variable_name, str):
         raise TypeError("Argument variable_name must be a str")
-    if not isinstance(percentiles, list) or not all(isinstance(p, int) for p in percentiles):
+    if not isinstance(percentiles, list) or not all(
+        isinstance(p, int) for p in percentiles
+    ):
         raise TypeError("Argument percentiles must be a list[int]")
     if not isinstance(grid_size, int):
         raise TypeError("Argument grid_size must be an int")
