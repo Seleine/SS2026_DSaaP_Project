@@ -1,4 +1,3 @@
-from datetime import datetime
 import geopandas as gpd
 
 def _calculate_timediff_seconds(later: gpd.GeoSeries, now: gpd.pd.Series) -> float:

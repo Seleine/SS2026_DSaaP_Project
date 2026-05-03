@@ -5,8 +5,6 @@ from shapely.geometry import Polygon
 from shapely import union_all
 from skimage import measure
 import pyproj
-import folium
-import json
 
 
 def extract_coords(data: gpd.GeoDataFrame) -> tuple[np.ndarray, np.ndarray]:

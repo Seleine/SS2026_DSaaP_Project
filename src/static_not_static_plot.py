@@ -157,6 +157,6 @@ def sample_plot_static_not_static(data: gpd.GeoDataFrame, start_date: str, end_d
 
     data_sample_plot = _filter_by_time(data, start_date, end_date, time_zone)
     m = _build_static_map(data_sample_plot)
-    output_html = os.path.abspath(f"../plots/sample_plot_static.html")
+    output_html = os.path.abspath("../plots/sample_plot_static.html")
     m.save(output_html)
     webbrowser.open(f"file://{output_html}")

@@ -1,4 +1,3 @@
-from shapely import MultiPolygon, Polygon
 import geopandas as gpd
 import folium
 from folium.plugins import GroupedLayerControl
