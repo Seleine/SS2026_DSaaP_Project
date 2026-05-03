@@ -4,6 +4,7 @@ import os
 import webbrowser
 import matplotlib.pyplot as plt
 
+
 def barplot_counts(data: gpd.GeoDataFrame, x_variable: str, title: str, plot_name: str):
     """
     Creates and saves a count bar plot for a given variable in a GeoDataFrame,

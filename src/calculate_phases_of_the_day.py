@@ -2,6 +2,7 @@ from suncalc import get_times
 import geopandas as gpd
 import numpy as np
 
+
 def calculate_phases_of_the_day(data: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     """
     Assign a day phase label to each GPS point based on sun times.
@@ -38,13 +39,15 @@ def calculate_phases_of_the_day(data: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     if data.geometry.isnull().any():
         raise ValueError("GeoDataFrame contains null geometries.")
 
-    data_wgs = data.to_crs(4326) # WGS84 needed for library suncalc
+    data_wgs = data.to_crs(4326)  # WGS84 needed for library suncalc
 
     sun_times = gpd.pd.DataFrame(
         get_times(
-            data_wgs["time"].astype("datetime64[ns, UTC]"), # suncalc need time in ns precision
+            data_wgs["time"].astype(
+                "datetime64[ns, UTC]"
+            ),  # suncalc need time in ns precision
             data_wgs["geometry"].x,
-            data_wgs["geometry"].y
+            data_wgs["geometry"].y,
         )
     ).reset_index(drop=True)
 
@@ -54,13 +57,15 @@ def calculate_phases_of_the_day(data: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
         (sun_times["dawn"] <= t) & (t <= sun_times["sunrise"]),
         (sun_times["sunset"] <= t) & (t <= sun_times["dusk"]),
         (sun_times["sunrise"] <= t) & (t <= sun_times["sunset"]),
-        (t < sun_times["dawn"]) | (t > sun_times["dusk"])
+        (t < sun_times["dawn"]) | (t > sun_times["dusk"]),
     ]
     choices = ["Dawn", "Dusk", "Daytime", "Nighttime"]
 
     data_wgs["dayphase"] = np.select(conditions, choices, default="Unknown")
 
-    print("If all four day phases appear, each gps tracking point is correctly grouped", data_wgs["dayphase"].unique())
+    print(
+        "If all four day phases appear, each gps tracking point is correctly grouped",
+        data_wgs["dayphase"].unique(),
+    )
 
     return data_wgs.to_crs(2056)
-

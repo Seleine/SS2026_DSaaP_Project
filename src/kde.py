@@ -53,12 +53,16 @@ def fit_kde(x: np.ndarray, y: np.ndarray) -> gaussian_kde:
 
     # fit KDE (bandwidth via Scott's rule, same default as kernelUD 'href' (cf. R code))
     # KDE learns the shape of the distribution of the GPS points
-    kde = gaussian_kde(np.vstack([x, y])) # matrix: nrows = 2, ncols = number of GPS points
+    kde = gaussian_kde(
+        np.vstack([x, y])
+    )  # matrix: nrows = 2, ncols = number of GPS points
 
     return kde
 
 
-def build_evaluation_grid_for_kde(x: np.ndarray, y: np.ndarray, grid_size: int = 200) -> tuple[np.ndarray, np.ndarray]:
+def build_evaluation_grid_for_kde(
+    x: np.ndarray, y: np.ndarray, grid_size: int = 200
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Build evaluation grid for kde.
 
@@ -89,7 +93,9 @@ def build_evaluation_grid_for_kde(x: np.ndarray, y: np.ndarray, grid_size: int =
     return xi, yi
 
 
-def build_meshgrid_for_kde(xi: np.ndarray, yi: np.ndarray) -> tuple[np.ndarray, np.ndarray]:
+def build_meshgrid_for_kde(
+    xi: np.ndarray, yi: np.ndarray
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Build meshgrid for kde.
 
@@ -129,17 +135,17 @@ def evaluate_kde(kde: gaussian_kde, Xi: np.ndarray, Yi: np.ndarray) -> np.ndarra
     Raises:
         TypeError: If argument is the wrong data type.
     """
-    if not isinstance(Xi, np.ndarray) or not isinstance(Yi, np.ndarray):
-        raise TypeError("Arguments Xi and Yi must be a np.ndarray")
     if not isinstance(kde, gaussian_kde):
         raise TypeError("Argument kde must be a gaussian_kde")
+    if not isinstance(Xi, np.ndarray) or not isinstance(Yi, np.ndarray):
+        raise TypeError("Arguments Xi and Yi must be a np.ndarray")
 
     # 2D grid (Xi, Yi) is fed in to the kde function to get a density value at every grid cell.
     # 2D array is flattened into a 1D array and stacked into a matrix with two rows
     # each column is one grid point as an (x, y) pair. -> this is the format gaussian_kde expects (dimensions, n_points)
     positions = np.vstack([Xi.ravel(), Yi.ravel()])
     # evaluate KDE at all positions, returns a flat array. reshape turns back into a matrix.
-    Zi = kde(positions).reshape(Xi.shape) # Zi = density surface
+    Zi = kde(positions).reshape(Xi.shape)  # Zi = density surface
 
     return Zi
 
@@ -165,7 +171,9 @@ def normalise_kde(Zi: np.ndarray) -> np.ndarray:
     return Zi_norm
 
 
-def contour_to_polygons(contour: np.ndarray, xi: np.ndarray, yi: np.ndarray) -> Polygon | None:
+def contour_to_polygons(
+    contour: np.ndarray, xi: np.ndarray, yi: np.ndarray
+) -> Polygon | None:
     """
     Convert contour paths to shapely polygons.
 
@@ -180,23 +188,40 @@ def contour_to_polygons(contour: np.ndarray, xi: np.ndarray, yi: np.ndarray) -> 
     Raises:
         TypeError: If argument is the wrong data type.
     """
-    if not isinstance(xi, np.ndarray) or not isinstance(yi, np.ndarray) or not isinstance(contour, np.ndarray):
+    if (
+        not isinstance(xi, np.ndarray)
+        or not isinstance(yi, np.ndarray)
+        or not isinstance(contour, np.ndarray)
+    ):
         raise TypeError("Arguments contour, Xi, and Yi must be a np.ndarray")
 
     # find_contours returns (row, col), need to convert back to (x, y) coordinates
     x_coords = xi[contour[:, 1].astype(int)]
     y_coords = yi[contour[:, 0].astype(int)]
-    coords = np.column_stack([x_coords, y_coords])  # returns shape (n, 2) -> each row is one (x, y) point
-    if len(coords) < 4:  # only possible to get a polygon with 3 points (for shapely first and last point must be identical to close the polygon).
+    coords = np.column_stack(
+        [x_coords, y_coords]
+    )  # returns shape (n, 2) -> each row is one (x, y) point
+    if (
+        len(coords) < 4
+    ):  # only possible to get a polygon with 3 points (for shapely first and last point must be identical to close the polygon).
         return None
     try:
         poly = Polygon(coords)
-        return poly if poly.is_valid and poly.area > 0 else None  # return True if a geometry is well-formed
+        return (
+            poly if poly.is_valid and poly.area > 0 else None
+        )  # return True if a geometry is well-formed
     except Exception:
         return None
 
 
-def extract_contour_polygons(xi: np.ndarray, yi: np.ndarray, Zi_norm: np.ndarray, variable_name: str, crs: pyproj.CRS, percentiles: list[int] = [95, 75, 50, 25, 10]) -> gpd.GeoDataFrame:
+def extract_contour_polygons(
+    xi: np.ndarray,
+    yi: np.ndarray,
+    Zi_norm: np.ndarray,
+    variable_name: str,
+    crs: pyproj.CRS,
+    percentiles: list[int] = [95, 75, 50, 25, 10],
+) -> gpd.GeoDataFrame:
     """
     Extract contour polygons for each percentile.
 
@@ -213,24 +238,39 @@ def extract_contour_polygons(xi: np.ndarray, yi: np.ndarray, Zi_norm: np.ndarray
     Raises:
         TypeError: If argument is the wrong data type.
     """
-    if not isinstance(xi, np.ndarray) or not isinstance(yi, np.ndarray) or not isinstance(Zi_norm, np.ndarray):
+    if (
+        not isinstance(xi, np.ndarray)
+        or not isinstance(yi, np.ndarray)
+        or not isinstance(Zi_norm, np.ndarray)
+    ):
         raise TypeError("Arguments xi, yi, and Zi_norm must be np.ndarray")
 
-    flat_sorted = np.sort(Zi_norm.ravel())[::-1] # flatten grid to 1D array, deselect spatial position and sort from highest to lowest density
-    cumsum = np.cumsum(flat_sorted) # cumsum needed for selecting the thresholds [95, 75, 50, 25, 10]
+    flat_sorted = np.sort(
+        Zi_norm.ravel()
+    )[
+        ::-1
+    ]  # flatten grid to 1D array, deselect spatial position and sort from highest to lowest density
+    cumsum = np.cumsum(
+        flat_sorted
+    )  # cumsum needed for selecting the thresholds [95, 75, 50, 25, 10]
 
     records = []
 
-    for pct in percentiles: # [95, 75, 50, 25, 10]
-        threshold_idx = np.searchsorted(cumsum, pct / 100.0) # gets the index of the percentile in the cumsum array
-        threshold = flat_sorted[min(threshold_idx, len(flat_sorted) - 1)] # returns threshold at which the contour line should be drawn (single density value)
+    for pct in percentiles:  # [95, 75, 50, 25, 10]
+        threshold_idx = np.searchsorted(
+            cumsum, pct / 100.0
+        )  # gets the index of the percentile in the cumsum array
+        threshold = flat_sorted[
+            min(threshold_idx, len(flat_sorted) - 1)
+        ]  # returns threshold at which the contour line should be drawn (single density value)
 
         # finds the lines where the surface equals threshold
         contours = measure.find_contours(Zi_norm, level=threshold)
 
         # convert contour paths to Shapely polygons
         polygons = [
-            poly for contour in contours
+            poly
+            for contour in contours
             if (poly := contour_to_polygons(contour, xi, yi)) is not None
         ]
 
@@ -239,12 +279,14 @@ def extract_contour_polygons(xi: np.ndarray, yi: np.ndarray, Zi_norm: np.ndarray
             # handles the case where the density surface has multiple disconnected regions
             # would return a MultiPolygon
             merged = union_all(polygons)
-            records.append({
-                "percent": pct,
-                "geometry": merged,
-                "area_km2": merged.area / 1e6,
-                "Variable": variable_name
-            })
+            records.append(
+                {
+                    "percent": pct,
+                    "geometry": merged,
+                    "area_km2": merged.area / 1e6,
+                    "Variable": variable_name,
+                }
+            )
 
     ########################
     # Return as GeoDataFrame
@@ -254,7 +296,12 @@ def extract_contour_polygons(xi: np.ndarray, yi: np.ndarray, Zi_norm: np.ndarray
     return ranges
 
 
-def calculate_kde_from_gps_points(data: gpd.GeoDataFrame, variable_name: str, percentiles: list[int] = [95, 75, 50, 25, 10], grid_size: int = 200) -> gpd.GeoDataFrame:
+def calculate_kde_from_gps_points(
+    data: gpd.GeoDataFrame,
+    variable_name: str,
+    percentiles: list[int] = [95, 75, 50, 25, 10],
+    grid_size: int = 200,
+) -> gpd.GeoDataFrame:
     """
     Calculate Kernel Density Estimation from GPS Points.
 
@@ -274,23 +321,11 @@ def calculate_kde_from_gps_points(data: gpd.GeoDataFrame, variable_name: str, pe
                       - geometry: polygon or multipolygon of the home range
                       - area_km2 (float): area of the home range in km2
     """
-    if not isinstance(data, gpd.GeoDataFrame):
-        raise TypeError("Argument data must be a gpd.GeoDataFrame")
-    if not isinstance(variable_name, str):
-        raise TypeError("Argument variable_name must be a str")
-    if not isinstance(percentiles, list) or not all(isinstance(p, int) for p in percentiles):
-        raise TypeError("Argument percentiles must be a list[int]")
-    if not isinstance(grid_size, int):
-        raise TypeError("Argument grid_size must be an int")
 
     if len(data) < 50:
-        raise ValueError(f"At least 50 GPS points required for reliable KDE estimation, got {len(data)}.")
-    if not percentiles:
-        raise ValueError("Argument percentiles must not be empty")
-    if not all(0 < p <= 100 for p in percentiles):
-        raise ValueError("All percentiles must be between 1 and 100")
-    if grid_size < 10:
-        raise ValueError("Argument grid_size must be at least 10")
+        raise ValueError(
+            f"At least 50 GPS points required for reliable KDE estimation, got {len(data)}."
+        )
 
     if percentiles is None:
         percentiles = [95, 75, 50, 25, 10]
@@ -302,4 +337,11 @@ def calculate_kde_from_gps_points(data: gpd.GeoDataFrame, variable_name: str, pe
     Zi = evaluate_kde(kde, Xi, Yi)
     Zi_norm = normalise_kde(Zi)
 
-    return extract_contour_polygons(xi=xi, yi=yi, Zi_norm=Zi_norm, variable_name=variable_name, crs=data.crs, percentiles=percentiles)
+    return extract_contour_polygons(
+        xi=xi,
+        yi=yi,
+        Zi_norm=Zi_norm,
+        variable_name=variable_name,
+        crs=data.crs,
+        percentiles=percentiles,
+    )

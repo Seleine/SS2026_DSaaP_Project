@@ -6,7 +6,9 @@ import webbrowser
 import branca.colormap as cm
 
 
-def collect_feature_groups(data_wgs: gpd.GeoDataFrame, colourmap:  cm.LinearColormap) -> list[folium.FeatureGroup]:
+def collect_feature_groups(
+    data_wgs: gpd.GeoDataFrame, colourmap: cm.LinearColormap
+) -> list[folium.FeatureGroup]:
     """
     Takes the reprojected GeoDataFrame and the scaled colourmap, returns
     a list of folium FeatureGroup objects (one per variable).
@@ -38,12 +40,16 @@ def collect_feature_groups(data_wgs: gpd.GeoDataFrame, colourmap:  cm.LinearColo
                 "color": "darkgrey",
                 "weight": 1,
             },
-            highlight_function=lambda _: { # called when the user hovers over a polygon
+            highlight_function=lambda _: {  # called when the user hovers over a polygon
                 "color": "white",
                 "weight": 2,
             },
-            tooltip=folium.GeoJsonTooltip(fields=["area_km2"], aliases=["area_km2:"]), # small popup while hovering
-        ).add_to(fg) # attaches the whole GeoJson layer to the FeatureGroup so it becomes part of that variable's toggle layer.
+            tooltip=folium.GeoJsonTooltip(
+                fields=["area_km2"], aliases=["area_km2:"]
+            ),  # small popup while hovering
+        ).add_to(
+            fg
+        )  # attaches the whole GeoJson layer to the FeatureGroup so it becomes part of that variable's toggle layer.
 
         feature_groups.append(fg)
 
@@ -63,6 +69,7 @@ def get_data_extend(data_wgs: gpd.GeoDataFrame) -> list[list[float]]:
 
     bounds = data_wgs.total_bounds
     return [[bounds[1], bounds[0]], [bounds[3], bounds[2]]]
+
 
 def plot_kde(data: gpd.pd.DataFrame, plot_name: str) -> folium.Map:
     """
@@ -121,7 +128,7 @@ def plot_kde(data: gpd.pd.DataFrame, plot_name: str) -> folium.Map:
     m = folium.Map()
 
     # Split GeoDataFrame by Variable, collect FeatureGroups
-    feature_groups = collect_feature_groups(data_wgs = data_wgs, colourmap = colourmap)
+    feature_groups = collect_feature_groups(data_wgs=data_wgs, colourmap=colourmap)
 
     # add each feature group to the map
     for fg in feature_groups:
@@ -135,7 +142,7 @@ def plot_kde(data: gpd.pd.DataFrame, plot_name: str) -> folium.Map:
     ).add_to(m)
 
     # Fit map to data extent
-    m.fit_bounds(get_data_extend(data_wgs = data_wgs))
+    m.fit_bounds(get_data_extend(data_wgs=data_wgs))
 
     output_html = os.path.abspath(f"../plots/{plot_name}.html")
     m.save(output_html)
