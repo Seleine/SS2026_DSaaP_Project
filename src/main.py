@@ -27,9 +27,7 @@ home_buffer = home_coords.home_coords.buffer(config.buffer_around_home)
 ########################################
 
 data = read_gps_data(
-    file_path = config.file_path,
-    gpx_layer = config.gpx_layer,
-    time_zone = config.time_zone
+    file_path=config.file_path, gpx_layer=config.gpx_layer, time_zone=config.time_zone
 )
 
 ########################################
@@ -116,7 +114,7 @@ plot_kde(data=kde_dayphases, plot_name="kde_dayphases")
 # Movement Analysis
 ########################################
 
-data = create_static_column(data = data, buffer = config.buffer_intersection)
+data = create_static_column(data=data, buffer=config.buffer_intersection)
 
 sample_plot_static_not_static(
     data=data, start_date="2024-04-01 00:00:00", end_date="2024-04-01 18:00:00"
@@ -142,4 +140,4 @@ kde_not_static = calculate_kde_from_gps_points(
 
 kde_movement = gpd.pd.concat([kde_static, kde_not_static])
 
-plot_kde(data = kde_movement, plot_name = "kde_movement")
+plot_kde(data=kde_movement, plot_name="kde_movement")
