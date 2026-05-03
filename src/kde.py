@@ -7,7 +7,7 @@ from skimage import measure
 import pyproj
 
 
-def extract_coords(data: gpd.GeoDataFrame) -> tuple[np.ndarray, np.ndarray]:
+def _extract_coords(data: gpd.GeoDataFrame) -> tuple[np.ndarray, np.ndarray]:
     """
     Extract x and y coordinates from a GeoDataFrame's geometry column.
 
@@ -34,7 +34,7 @@ def extract_coords(data: gpd.GeoDataFrame) -> tuple[np.ndarray, np.ndarray]:
     return x, y
 
 
-def fit_kde(x: np.ndarray, y: np.ndarray) -> gaussian_kde:
+def _fit_kde(x: np.ndarray, y: np.ndarray) -> gaussian_kde:
     """
     Fit KDE on coordinates of GPS data points.
 
@@ -60,7 +60,7 @@ def fit_kde(x: np.ndarray, y: np.ndarray) -> gaussian_kde:
     return kde
 
 
-def build_evaluation_grid_for_kde(
+def _build_evaluation_grid_for_kde(
     x: np.ndarray, y: np.ndarray, grid_size: int = 200
 ) -> tuple[np.ndarray, np.ndarray]:
     """
@@ -93,7 +93,7 @@ def build_evaluation_grid_for_kde(
     return xi, yi
 
 
-def build_meshgrid_for_kde(
+def _build_meshgrid_for_kde(
     xi: np.ndarray, yi: np.ndarray
 ) -> tuple[np.ndarray, np.ndarray]:
     """
@@ -120,7 +120,7 @@ def build_meshgrid_for_kde(
     return Xi, Yi
 
 
-def evaluate_kde(kde: gaussian_kde, Xi: np.ndarray, Yi: np.ndarray) -> np.ndarray:
+def _evaluate_kde(kde: gaussian_kde, Xi: np.ndarray, Yi: np.ndarray) -> np.ndarray:
     """
     Evaluate the kde.
 
@@ -135,10 +135,10 @@ def evaluate_kde(kde: gaussian_kde, Xi: np.ndarray, Yi: np.ndarray) -> np.ndarra
     Raises:
         TypeError: If argument is the wrong data type.
     """
-    if not isinstance(kde, gaussian_kde):
-        raise TypeError("Argument kde must be a gaussian_kde")
     if not isinstance(Xi, np.ndarray) or not isinstance(Yi, np.ndarray):
         raise TypeError("Arguments Xi and Yi must be a np.ndarray")
+    if not isinstance(kde, gaussian_kde):
+        raise TypeError("Argument kde must be a gaussian_kde")
 
     # 2D grid (Xi, Yi) is fed in to the kde function to get a density value at every grid cell.
     # 2D array is flattened into a 1D array and stacked into a matrix with two rows
@@ -150,7 +150,7 @@ def evaluate_kde(kde: gaussian_kde, Xi: np.ndarray, Yi: np.ndarray) -> np.ndarra
     return Zi
 
 
-def normalise_kde(Zi: np.ndarray) -> np.ndarray:
+def _normalise_kde(Zi: np.ndarray) -> np.ndarray:
     """
     Normalise to a probability surface.
 
@@ -171,7 +171,7 @@ def normalise_kde(Zi: np.ndarray) -> np.ndarray:
     return Zi_norm
 
 
-def contour_to_polygons(
+def _contour_to_polygons(
     contour: np.ndarray, xi: np.ndarray, yi: np.ndarray
 ) -> Polygon | None:
     """
@@ -214,7 +214,7 @@ def contour_to_polygons(
         return None
 
 
-def extract_contour_polygons(
+def _extract_contour_polygons(
     xi: np.ndarray,
     yi: np.ndarray,
     Zi_norm: np.ndarray,
@@ -271,7 +271,7 @@ def extract_contour_polygons(
         polygons = [
             poly
             for contour in contours
-            if (poly := contour_to_polygons(contour, xi, yi)) is not None
+            if (poly := _contour_to_polygons(contour, xi, yi)) is not None
         ]
 
         if polygons:
@@ -321,23 +321,36 @@ def calculate_kde_from_gps_points(
                       - geometry: polygon or multipolygon of the home range
                       - area_km2 (float): area of the home range in km2
     """
-
+    if not isinstance(data, gpd.GeoDataFrame):
+        raise TypeError("Argument data must be a gpd.GeoDataFrame")
+    if not isinstance(variable_name, str):
+        raise TypeError("Argument variable_name must be a str")
+    if not isinstance(percentiles, list) or not all(isinstance(p, int) for p in percentiles):
+        raise TypeError("Argument percentiles must be a list[int]")
+    if not isinstance(grid_size, int):
+        raise TypeError("Argument grid_size must be an int")
     if len(data) < 50:
         raise ValueError(
             f"At least 50 GPS points required for reliable KDE estimation, got {len(data)}."
         )
+    if not percentiles:
+        raise ValueError("Argument percentiles must not be empty")
+    if not all(0 < p <= 100 for p in percentiles):
+        raise ValueError("All percentiles must be between 1 and 100")
+    if grid_size < 10:
+        raise ValueError("Argument grid_size must be at least 10")
 
     if percentiles is None:
         percentiles = [95, 75, 50, 25, 10]
 
-    x, y = extract_coords(data)
-    kde = fit_kde(x, y)
-    xi, yi = build_evaluation_grid_for_kde(x, y, grid_size)
-    Xi, Yi = build_meshgrid_for_kde(xi, yi)
-    Zi = evaluate_kde(kde, Xi, Yi)
-    Zi_norm = normalise_kde(Zi)
+    x, y = _extract_coords(data)
+    kde = _fit_kde(x, y)
+    xi, yi = _build_evaluation_grid_for_kde(x, y, grid_size)
+    Xi, Yi = _build_meshgrid_for_kde(xi, yi)
+    Zi = _evaluate_kde(kde, Xi, Yi)
+    Zi_norm = _normalise_kde(Zi)
 
-    return extract_contour_polygons(
+    return _extract_contour_polygons(
         xi=xi,
         yi=yi,
         Zi_norm=Zi_norm,
