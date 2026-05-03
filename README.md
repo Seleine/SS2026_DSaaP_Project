@@ -30,8 +30,22 @@ tests/              test files
 .github/workflows   folder containing GitHub actions
 ```
 
+## Install UV
+- https://docs.astral.sh/uv/getting-started/installation/#winget
+
+For Windows: open terminal and run:
+
+```bash
+winget install --id=astral-sh.uv  -e
+```
+
+For Mac/Linux: open terminal and run:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
 ## Set Up Project
-- Install UV: https://docs.astral.sh/uv/getting-started/installation/#winget
 
 Open terminal (in your IDE) and run:
 
@@ -47,12 +61,12 @@ Therefore, the file `home_coords.py` has to be created and looks as follows:
 ```python
 import geopandas as gpd
 from shapely import Point
-import src.config
+import config
 
 # Please enter your home coordinates ("Easting", "Northing") in the correct CRS
 point = Point(["Easting", "Northing"])
 
-home_coords = gpd.GeoSeries([point], crs=src.config.CRS)
+home_coords = gpd.GeoSeries([point], crs=config.CRS)
 ```
 The correct projected CRS can be found on [EPSG.io](https://epsg.io/).
 
@@ -76,10 +90,10 @@ The file `config.py` contains several variables which needs to be provided by th
 Open terminal (in your IDE) and run:
 
 ```bash
-uv run main.py
+uv run src/main.py
 ```
 
-The resulting plot will appear in the folder «plots».
+The resulting plots will appear in the folder «plots».
 
 ## Data
 
