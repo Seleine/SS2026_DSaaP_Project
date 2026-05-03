@@ -18,14 +18,8 @@ jobs:
       - name: Install project
         run: uv sync --locked --all-extras --dev
 
-      - name: Run tests with coverage
-        run: uv run pytest tests --cov=src --cov-report=xml --cov-report=term
-
-      - name: Upload coverage to codecov
-        if: always()
-        uses: codecov/codecov-action@v5
-        with:
-          files: ./coverage.xml
+      - name: Run tests
+        run: uv run pytest tests
 
       - name: Run ruff linter
         if: always()
