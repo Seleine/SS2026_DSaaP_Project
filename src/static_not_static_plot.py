@@ -164,6 +164,10 @@ def sample_plot_static_not_static(
 
     data_sample_plot = _filter_by_time(data, start_date, end_date, time_zone)
     m = _build_static_map(data_sample_plot)
+
+    if not os.path.exists("./plots"):
+        os.mkdir("./plots")
+
     output_html = os.path.abspath("../plots/sample_plot_static.html")
     m.save(output_html)
     webbrowser.open(f"file://{output_html}")
