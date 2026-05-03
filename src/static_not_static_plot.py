@@ -128,7 +128,7 @@ def sample_plot_static_not_static(
     data: gpd.GeoDataFrame,
     start_date: str,
     end_date: str,
-    time_zone: str = customised_variables.time_zone,
+    time_zone: str = config.time_zone,
 ) -> None:
     """
     Generate and open an interactive map of static vs. non-static GPS points.
