@@ -31,7 +31,9 @@ def main():
     data_path = config.file_path
 
     data = read_gps_data(
-        file_path=Path(__file__).resolve().parent.parent / data_path, gpx_layer=config.gpx_layer, time_zone=config.time_zone
+        file_path=Path(__file__).resolve().parent.parent / data_path,
+        gpx_layer=config.gpx_layer,
+        time_zone=config.time_zone,
     )
 
     ########################################
