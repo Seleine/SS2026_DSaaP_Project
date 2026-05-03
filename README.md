@@ -22,9 +22,6 @@ Open street map is used as base layer.
 
 ## Repository Structure
 
-
-Brief overview of the repository layout.
-
 ```
 data_tractive/      input datasets from tractive
 src/                analysis scripts
@@ -35,17 +32,12 @@ tests/              test files
 
 ## Set Up Project
 - Install UV: https://docs.astral.sh/uv/getting-started/installation/#winget
-- to run project after installing uv enter in terminal: `uv run main.py`
-Describe how to set up the environment and dependencies.
 
-Example:
+Open terminal (in your IDE) and run:
 
-```
+```bash
 git clone https://github.com/Seleine/SS2026_DSaaP_Project.git
 cd SS2026_DSaaP_Project
-
-conda env create -f environment.yml
-conda activate project-env
 ```
 
 ### Home Coordinates
@@ -55,16 +47,17 @@ Therefore, the file `home_coords.py` has to be created and looks as follows:
 ```python
 import geopandas as gpd
 from shapely import Point
-import src.customised_variables
+import src.config
 
 # Please enter your home coordinates ("Easting", "Northing") in the correct CRS
 point = Point(["Easting", "Northing"])
 
-home_coords = gpd.GeoSeries([point], crs=src.customised_variables.CRS)
+home_coords = gpd.GeoSeries([point], crs=src.config.CRS)
 ```
+The correct projected CRS can be found on [EPSG.io](https://epsg.io/).
 
-### Customised Variables
-The file `customised_variables.py` contains several variables which needs to be provided by the user.
+### Config File
+The file `config.py` contains several variables which needs to be provided by the user.
 
 | **Variable Name**   | **Example Value**                          | **Description**                                                                                                                                                                                |
 |---------------------|--------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -78,36 +71,20 @@ The file `customised_variables.py` contains several variables which needs to be 
 | min_timelag_s       | 540                                        | The tractive collar usually sends data in regular intervals. For higher data quality it is sensible to delete data points which are considerably lower than the set interval.                  |
 | buffer_intersection | 8                                          | For determining (non-)static phases, a buffer around each data point is needed.                                                                                                                |
 
-## Running the Analysis
+### Running the Analysis
 
+Open terminal (in your IDE) and run:
 
-Explain the minimal steps needed to run the project.
-
-Example:
-
-```
-python scripts/run_analysis.py
+```bash
+uv run main.py
 ```
 
-or
-
-```
-snakemake --cores 4
-```
-
-State where results will appear.
+The resulting plot will appear in the folder «plots».
 
 ## Data
 
-Describe where the data comes from.
-
-* Is the data included in the repository?
-* If not, where can it be downloaded?
-* Provide accession numbers or links if applicable.
-
-Example:
-
-Dataset available from GEO
+The GPS data from [Tractive](https://tractive.com/) should be provided by the user.
+The folder «data_tractive» contains sample GPS data colleted from a cat.
 
 ## Authors
 
