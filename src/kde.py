@@ -131,10 +131,10 @@ def evaluate_kde(kde: gaussian_kde, Xi: np.ndarray, Yi: np.ndarray) -> np.ndarra
     Raises:
         TypeError: If argument is the wrong data type.
     """
-    if not isinstance(kde, gaussian_kde):
-        raise TypeError("Argument kde must be a gaussian_kde")
     if not isinstance(Xi, np.ndarray) or not isinstance(Yi, np.ndarray):
         raise TypeError("Arguments Xi and Yi must be a np.ndarray")
+    if not isinstance(kde, gaussian_kde):
+        raise TypeError("Argument kde must be a gaussian_kde")
 
     # 2D grid (Xi, Yi) is fed in to the kde function to get a density value at every grid cell.
     # 2D array is flattened into a 1D array and stacked into a matrix with two rows
@@ -276,9 +276,23 @@ def calculate_kde_from_gps_points(data: gpd.GeoDataFrame, variable_name: str, pe
                       - geometry: polygon or multipolygon of the home range
                       - area_km2 (float): area of the home range in km2
     """
+    if not isinstance(data, gpd.GeoDataFrame):
+        raise TypeError("Argument data must be a gpd.GeoDataFrame")
+    if not isinstance(variable_name, str):
+        raise TypeError("Argument variable_name must be a str")
+    if not isinstance(percentiles, list) or not all(isinstance(p, int) for p in percentiles):
+        raise TypeError("Argument percentiles must be a list[int]")
+    if not isinstance(grid_size, int):
+        raise TypeError("Argument grid_size must be an int")
 
     if len(data) < 50:
         raise ValueError(f"At least 50 GPS points required for reliable KDE estimation, got {len(data)}.")
+    if not percentiles:
+        raise ValueError("Argument percentiles must not be empty")
+    if not all(0 < p <= 100 for p in percentiles):
+        raise ValueError("All percentiles must be between 1 and 100")
+    if grid_size < 10:
+        raise ValueError("Argument grid_size must be at least 10")
 
     if percentiles is None:
         percentiles = [95, 75, 50, 25, 10]
