@@ -14,6 +14,7 @@ from summary_table import summary_table
 from kde import calculate_kde_from_gps_points
 from kde_plot import plot_kde
 from bar_plot_counts import barplot_counts
+from pathlib import Path
 
 
 def main():
@@ -27,8 +28,10 @@ def main():
     # Read in GPS data
     ########################################
 
+    data_path = config.file_path
+
     data = read_gps_data(
-        file_path=config.file_path, gpx_layer=config.gpx_layer, time_zone=config.time_zone
+        file_path=Path(__file__).resolve().parent.parent / data_path, gpx_layer=config.gpx_layer, time_zone=config.time_zone
     )
 
     ########################################
