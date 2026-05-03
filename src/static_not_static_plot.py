@@ -1,7 +1,7 @@
 import geopandas as gpd
 import pandas as pd
 from shapely.geometry import LineString
-import customised_variables
+import config
 import webbrowser
 import os
 
@@ -122,7 +122,7 @@ def _build_static_map(data: gpd.GeoDataFrame):
     return m
 
 
-def sample_plot_static_not_static(data: gpd.GeoDataFrame, start_date: str, end_date: str, time_zone: str = customised_variables.time_zone) -> None:
+def sample_plot_static_not_static(data: gpd.GeoDataFrame, start_date: str, end_date: str, time_zone: str = config.time_zone) -> None:
     """
     Generate and open an interactive map of static vs. non-static GPS points.
 

@@ -1,5 +1,5 @@
 ########################################
-# Customised Variables
+# Config / Customised Variables
 ########################################
 
 buffer_around_home = 8

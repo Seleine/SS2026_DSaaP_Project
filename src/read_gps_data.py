@@ -1,7 +1,7 @@
 import geopandas as gpd
 import pandas as pd
 import glob
-import customised_variables
+import config
 import os
 
 def read_gps_data(file_path: str, gpx_layer: str, time_zone: str) -> gpd.GeoDataFrame:
@@ -55,7 +55,7 @@ def read_gps_data(file_path: str, gpx_layer: str, time_zone: str) -> gpd.GeoData
     # concatenate all GeoDataFrames into one
     merged_data = gpd.pd.concat(data_list, ignore_index=True)
 
-    merged_data = merged_data[customised_variables.columns_of_choice]
+    merged_data = merged_data[config.columns_of_choice]
 
     # ensure correct data type and time zone for time column
     merged_data["time"] =  pd.to_datetime(merged_data["time"]).dt.tz_convert(time_zone)
@@ -75,7 +75,7 @@ def read_gps_data(file_path: str, gpx_layer: str, time_zone: str) -> gpd.GeoData
     merged_data = merged_data.set_geometry("geometry")
 
     # ensure correct CRS
-    merged_data = merged_data.to_crs(customised_variables.CRS)
+    merged_data = merged_data.to_crs(config.CRS)
 
     if len(merged_data) < 50:
         raise ValueError(
