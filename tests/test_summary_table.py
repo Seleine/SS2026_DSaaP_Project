@@ -3,7 +3,6 @@ import pytest
 import geopandas as gpd
 from datetime import datetime
 import numpy as np
-from geopandas.testing import assert_geodataframe_equal
 from src.summary_table import summary_table
 from io import StringIO
 import sys

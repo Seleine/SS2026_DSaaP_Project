@@ -1,9 +1,7 @@
 import shapely
 import pytest
 import geopandas as gpd
-from datetime import datetime
 import numpy as np
-from geopandas.testing import assert_geodataframe_equal
 from src.kde import calculate_kde_from_gps_points
 
 @pytest.fixture
