@@ -83,8 +83,6 @@ def create_static_column(data: gpd.GeoDataFrame, buffer: int) -> gpd.GeoDataFram
             data.at[data.index[i], "static"] = "Not Static"
             id = i
 
-    data = data.drop("geom_buffer", axis=1)
-
-    data["static"] = data["static"].astype(gpd.pd.StringDtype())  # add before return
+    data["static"] = data["static"].astype(gpd.pd.StringDtype())
 
     return data

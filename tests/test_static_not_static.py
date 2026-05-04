@@ -48,7 +48,11 @@ def test_create_static_column_should_return_new_geodataframe_when_input_valid():
         crs=2056,
     )
 
-    assert_geodataframe_equal(data, expected, check_like=True)
+    assert_geodataframe_equal(
+        data.drop(columns="geom_buffer"),
+        expected,
+        check_like=True,
+    )
 
 
 def test_create_static_column_raises_if_data_is_not_geodataframe():
