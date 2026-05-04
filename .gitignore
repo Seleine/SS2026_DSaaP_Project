@@ -1,10 +1,5 @@
-.Rproj.user
-.Rhistory
-.RData
-.Ruserdata
 .venv
 .idea
-*.html
-*.png
 src/home_coords.py
 .coverage
+plots/

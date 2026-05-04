@@ -1,3 +1,4 @@
+from pathlib import Path
 import geopandas as gpd
 import pandas as pd
 import glob
@@ -5,13 +6,13 @@ import config
 import os
 
 
-def read_gps_data(file_path: str, gpx_layer: str, time_zone: str) -> gpd.GeoDataFrame:
+def read_gps_data(file_path: Path, gpx_layer: str, time_zone: str) -> gpd.GeoDataFrame:
     """
     Read and merge all GPX files from a directory into a single GeoDataFrame.
 
     Parameters
     ----------
-    file_path : str
+    file_path : Path
         Path to the directory containing the .gpx files.
     gpx_layer : str
         GPX layer to read, e.g. "track_points" or "tracks".
