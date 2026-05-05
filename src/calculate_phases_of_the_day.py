@@ -3,7 +3,8 @@ import geopandas as gpd
 import numpy as np
 
 
-def calculate_phases_of_the_day(data: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+def calculate_phases_of_the_day(data: gpd.GeoDataFrame, get_sun_times: callable = get_times,
+                                ) -> gpd.GeoDataFrame:  #  injected dependency
     """
     Assign a day phase label to each GPS point based on sun times.
 
@@ -18,7 +19,7 @@ def calculate_phases_of_the_day(data: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
 
     Returns
     -------
-    gpd.GeoDataFrame
+    gpd.GeoDataFrame,
         The input GeoDataFrame in LV95 (EPSG:2056) with an additional
         'dayphase' column containing one of:
         'Dawn', 'Daytime', 'Dusk', or 'Nighttime'.
