@@ -28,15 +28,15 @@ def calculate_phases_of_the_day(data: gpd.GeoDataFrame, get_sun_times: callable 
     # check if input is a GeoDataFrame
     if not isinstance(data, gpd.GeoDataFrame):
         raise TypeError(f"Expected a GeoDataFrame, got {type(data).__name__}.")
+    # check if GeoDataFrame is empty
+    if data.empty:
+        raise ValueError("GeoDataFrame is empty.")
     # check if 'time' column exists
     if "time" not in data.columns:
         raise ValueError("GeoDataFrame must contain a 'time' column.")
     # check if 'time' column is timezone-aware
     if not pd.api.types.is_datetime64tz_dtype(data["time"]):
         raise ValueError("The 'time' column must be timezone-aware.")
-    # check if GeoDataFrame is empty
-    if data.empty:
-        raise ValueError("GeoDataFrame is empty.")
     # check if geometry column exists and is valid
     if data.geometry.isnull().any():
         raise ValueError("GeoDataFrame contains null geometries.")
