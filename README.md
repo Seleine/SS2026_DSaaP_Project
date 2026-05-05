@@ -1,15 +1,12 @@
-# DSaaP Project
+# Investigating Cat Movement Patterns 
 
-## What this Project does
+## Project goals
 This project analyses GPS tracking data from a [Tractive](https://tractive.com/) collar (.gpx from tractive), which is mostly worn by cats and dogs.
-The data is cleaned and day phases (night, dawn, day, dusk) and (non-)static phases are computed.
+The raw data is cleaned and is segmented along two dimensions: day phases (night, dawn, day, dusk) and movement phases (moving vs. static phases).
 For day phases and for (non-)static data the home range estimation (KDE) is computed.
 In the end, two interactive plots are generated as HTML files.
 The first plot shows the home range estimation for different day phases.
 The second plot shows the range for (non-)static data.
-For calculating the home range at least 50 data points must be provided.
-Therefore, the tracker must be worn outside for at least two days.
-The purpose is to find out more about the behaviour of the individuum wearing the tracker.
 
 ### Key Analyses
 - Home Range Estimation: Kernel Density Estimation (KDE) to compute utilisation distributions (95%, 75%, 50%, 25%, 10%).
@@ -35,7 +32,8 @@ The quality_control folder contains the barplots, showing the number of data poi
 The plots folder contains the products / interactive plots.
 
 ## Install UV
-- https://docs.astral.sh/uv/getting-started/installation/#winget
+Installation instructions can be found in the official uv documentation:
+https://docs.astral.sh/uv/getting-started/installation/#winget
 
 For Windows: open terminal and run:
 
@@ -51,7 +49,7 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 
 ## Set Up Project
 
-Open terminal (in your IDE) and run:
+Open terminal in your IDE and run:
 
 ```bash
 git clone https://github.com/Seleine/SS2026_DSaaP_Project.git
@@ -59,8 +57,8 @@ cd SS2026_DSaaP_Project
 ```
 
 ### Home Coordinates
-For data security, the home coordinates are stored in a separate Python file which won't be uploaded to GitHub.
-Therefore, the file `home_coords.py` has to be created and looks as follows:
+For the protection of sensitive location data, the home coordinates are stored in a separate Python file that is excluded from the GitHub repository via .gitignore.
+Therefore, the file `home_coords.py` must be manually created by the user following the structure below:
 
 ```python
 import geopandas as gpd
@@ -75,7 +73,7 @@ home_coords = gpd.GeoSeries([point], crs=config.CRS)
 The correct projected CRS can be found on [EPSG.io](https://epsg.io/).
 
 ### Config File
-The file `config.py` contains several variables which needs to be provided by the user.
+The file `config.py` contains several variables which must be provided by the user.
 
 | **Variable Name**   | **Example Value**                          | **Description**                                                                                                                                                                                |
 |---------------------|--------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -91,7 +89,7 @@ The file `config.py` contains several variables which needs to be provided by th
 
 ### Running the Analysis
 
-Open terminal (in your IDE) and run:
+Open terminal in your IDE and run:
 
 ```bash
 uv run src/main.py
@@ -101,7 +99,8 @@ The resulting plots will appear in the folder «plots».
 
 ## Data
 
-The GPS data from [Tractive](https://tractive.com/) should be provided by the user.
+The GPS data from [Tractive](https://tractive.com/) must be provided by the user. For calculating the home range at least 50 data points must be provided.
+Therefore, the tracker must be worn outside for at least two days.
 The folder «data_tractive» contains sample GPS data colleted from a cat.
 
 ## Authors
@@ -115,6 +114,6 @@ Schloss
 
 ## License
 
-This project is licensed under the <LICENCENAME> License – see the LICENSE file for details.
+This project is licensed under the MIT License. See the License file for details.
 
 
