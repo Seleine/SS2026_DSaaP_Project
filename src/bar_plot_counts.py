@@ -40,7 +40,9 @@ def barplot_counts(data: gpd.GeoDataFrame, x_variable: str, title: str, plot_nam
     if not os.path.exists("./quality_control"):
         os.mkdir("./quality_control")
 
-    output_path = os.path.abspath(f"./quality_control/barplot_count_data_points_{plot_name}.png")
+    output_path = os.path.abspath(
+        f"./quality_control/barplot_count_data_points_{plot_name}.png"
+    )
     ax.get_figure().savefig(output_path, bbox_inches="tight")
     plt.close()
 

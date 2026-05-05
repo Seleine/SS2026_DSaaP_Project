@@ -65,7 +65,11 @@ def main():
     # Summary Table
     ########################################
 
-    summary_table(data=data, datetime_col="time", table_name="summary_table_before_outlier_deletion")
+    summary_table(
+        data=data,
+        datetime_col="time",
+        table_name="summary_table_before_outlier_deletion",
+    )
 
     ########################################
     # Calculate Time Lag and Check Speed Value 2
@@ -86,7 +90,11 @@ def main():
     # Summary Table 2
     ########################################
 
-    summary_table(data=data, datetime_col="time", table_name="summary_table_after_outlier_deletion")
+    summary_table(
+        data=data,
+        datetime_col="time",
+        table_name="summary_table_after_outlier_deletion",
+    )
 
     ########################################
     # KDE Plot Phases of the Day

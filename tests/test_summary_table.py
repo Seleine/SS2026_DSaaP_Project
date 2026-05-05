@@ -53,7 +53,9 @@ def test_summary_table():
 
 def test_summary_table_raises_if_data_is_not_geodataframe():
     with pytest.raises(TypeError):
-        summary_table(data="not a geodataframe", datetime_col="time", table_name="table")
+        summary_table(
+            data="not a geodataframe", datetime_col="time", table_name="table"
+        )
 
 
 def test_summary_table_raises_if_buffer_is_not_int():

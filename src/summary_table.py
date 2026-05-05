@@ -4,7 +4,9 @@ import os
 import webbrowser
 
 
-def summary_table(data: gpd.GeoDataFrame, datetime_col: str, table_name: str) -> pd.DataFrame:
+def summary_table(
+    data: gpd.GeoDataFrame, datetime_col: str, table_name: str
+) -> pd.DataFrame:
     """
     Create a summary table of the data to get an overview of the data quality.
 
@@ -59,12 +61,26 @@ def summary_table(data: gpd.GeoDataFrame, datetime_col: str, table_name: str) ->
     output_path = os.path.abspath(f"./quality_control/{table_name}.html")
 
     (
-        table.style
-        .set_table_styles([
-            {"selector": "th", "props": [("background-color", "#4CAF50"), ("color", "white"), ("padding", "8px")]},
-            {"selector": "td", "props": [("padding", "8px"), ("border", "1px solid #ddd")]},
-            {"selector": "tr:nth-child(even)", "props": [("background-color", "#f2f2f2")]},
-        ])
+        table.style.set_table_styles(
+            [
+                {
+                    "selector": "th",
+                    "props": [
+                        ("background-color", "#4CAF50"),
+                        ("color", "white"),
+                        ("padding", "8px"),
+                    ],
+                },
+                {
+                    "selector": "td",
+                    "props": [("padding", "8px"), ("border", "1px solid #ddd")],
+                },
+                {
+                    "selector": "tr:nth-child(even)",
+                    "props": [("background-color", "#f2f2f2")],
+                },
+            ]
+        )
         .hide(axis="index")
         .to_html(output_path)
     )
