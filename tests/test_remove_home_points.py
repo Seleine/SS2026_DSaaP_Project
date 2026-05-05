@@ -1,6 +1,5 @@
 import pytest
 import geopandas as gpd
-from test_kde import sample_gdf
 from shapely.geometry import Point, Polygon
 from src.config import buffer_around_home
 from src.remove_home_points import remove_home_points
