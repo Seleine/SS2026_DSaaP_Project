@@ -21,8 +21,8 @@ def summary_table(data: gpd.GeoDataFrame, datetime_col: str, table_name: str) ->
     """
     if not isinstance(data, gpd.GeoDataFrame):
         raise TypeError("Argument data must be gpd.GeoDataFrame")
-    elif not isinstance(datetime_col, str):
-        raise TypeError("Argument datetime_col must be a string")
+    elif not isinstance(datetime_col, str) or not isinstance(table_name, str):
+        raise TypeError("Argument datetime_col and table_name must be string")
 
     data = data.sort_values(by=datetime_col)
 
