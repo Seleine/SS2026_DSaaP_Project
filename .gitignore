@@ -4,3 +4,4 @@ src/home_coords.py
 .coverage
 plots/
 __pycache__/ # Python bytecode
+quality_control/
