@@ -1,28 +1,12 @@
-
 import geopandas as gpd
-import numpy as np
 import pandas as pd
 import shapely
-
 import pytest
 from test_kde import sample_gdf
 from src.calculate_phases_of_the_day import calculate_phases_of_the_day
+from conftest import sample_gdf_with_time
 
 # Auxillary functions
-@pytest.fixture
-def sample_gdf_with_time(sample_gdf):
-    """
-    Create a sample GeoDataFrame with a 'time' column for testing calculate_phases_of_the_day.
-    """
-    gdf = sample_gdf.copy()
-    gdf["time"] = pd.date_range(
-        "2024-01-01 12:00",
-        periods=len(gdf),
-        freq="min",
-        tz="Europe/Zurich",
-    )
-    return gdf
-
 def fake_get_times(times, lon, lat):
     """
     A fake implementation of suncalc.get_times that returns fixed times for testing purposes.
