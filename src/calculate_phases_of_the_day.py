@@ -1,6 +1,7 @@
 from suncalc import get_times
 import geopandas as gpd
 import numpy as np
+import pandas as pd
 
 
 def calculate_phases_of_the_day(data: gpd.GeoDataFrame, get_sun_times: callable = get_times,
@@ -31,7 +32,7 @@ def calculate_phases_of_the_day(data: gpd.GeoDataFrame, get_sun_times: callable 
     if "time" not in data.columns:
         raise ValueError("GeoDataFrame must contain a 'time' column.")
     # check if 'time' column is timezone-aware
-    if data["time"].dt.tz is None:
+    if not pd.api.types.is_datetime64tz_dtype(data["time"]):
         raise ValueError("The 'time' column must be timezone-aware.")
     # check if GeoDataFrame is empty
     if data.empty:
