@@ -25,10 +25,14 @@ Open street map is used as base layer.
 ```
 data_tractive/      input datasets from tractive
 src/                analysis scripts
-plots/              output figures
 tests/              test files
 .github/workflows   folder containing GitHub actions
 ```
+
+When running the code, two more folders are generated: quality_control and plots.
+Depending on from where the user runs the script, the two folders are generated in the root or in the src folder.
+The quality_control folder contains the barplots, showing the number of data points per phase.
+The plots folder contains the products / interactive plots.
 
 ## Install UV
 - https://docs.astral.sh/uv/getting-started/installation/#winget
