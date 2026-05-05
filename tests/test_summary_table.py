@@ -58,13 +58,13 @@ def test_summary_table_raises_if_data_is_not_geodataframe():
         )
 
 
-def test_summary_table_raises_if_buffer_is_not_int():
+def test_summary_table_raises_if_datetime_col_not_str():
     gdf = gpd.GeoDataFrame()
     with pytest.raises(TypeError):
         summary_table(data=gdf, datetime_col=123, table_name="table")
 
 
-def test_summary_table_raises_if_buffer_is_not_int():
+def test_summary_table_raises_if_table_name_not_str():
     gdf = gpd.GeoDataFrame()
     with pytest.raises(TypeError):
         summary_table(data=gdf, datetime_col="time", table_name=123)
