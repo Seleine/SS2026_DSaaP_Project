@@ -7,6 +7,7 @@ from geopandas.testing import assert_geodataframe_equal
 from src.static_not_static import create_static_column
 
 
+def test_create_static_column_should_return_new_geodataframe_when_input_valid(sample_layer):
     # Act
     data = create_static_column(data=sample_layer, buffer=8)
 
