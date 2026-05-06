@@ -1,7 +1,8 @@
 import pytest
 import numpy as np
 import geopandas as gpd
-import datetime
+from datetime import datetime
+import pandas as pd
 import shapely
 from shapely.geometry import Point, Polygon
 
