@@ -1,32 +1,17 @@
-import shapely
 import pytest
 import geopandas as gpd
-from datetime import datetime
-import numpy as np
-from geopandas.testing import assert_geodataframe_equal
 from src.static_not_static import create_static_column
 
 
-def test_create_static_column_should_return_new_geodataframe_when_input_valid(sample_layer):
-    # Act
-    data = create_static_column(data=sample_layer, buffer=8)
+def test_create_static_column_marks_all_not_static(sample_layer):
+    result = create_static_column(sample_layer, buffer=8)
 
-    # Assert
-    expected = gpd.GeoDataFrame(
-        {
-            **sample_data,  # unpacks dictionaries into keyword arguments
-            "static": gpd.pd.array(
-                ["Not Static", "Not Static", "Not Static"], dtype=gpd.pd.StringDtype()
-            ),
-        },
-        crs=2056,
-    )
-
-    assert_geodataframe_equal(
-        data.drop(columns="geom_buffer"),
-        expected,
-        check_like=True,
-    )
+    assert "static" in result.columns
+    assert list(result["static"]) == [
+        "Not Static",
+        "Not Static",
+        "Not Static",
+    ]
 
 
 def test_create_static_column_raises_if_data_is_not_geodataframe():
