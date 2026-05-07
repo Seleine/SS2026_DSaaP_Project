@@ -18,18 +18,23 @@ def sample_gdf():
 
 
 @pytest.fixture
-def sample_gdf_with_time(sample_gdf):
+def sample_gdf_with_dayphase_times(sample_gdf):
     """
-    Create a sample GeoDataFrame with a 'time' column for testing calculate_phases_of_the_day.
+    Create a sample GeoDataFrame with a 'time' column with times spanning across the day to test calculate_phases_of_the_day.
     """
-    gdf = sample_gdf.copy()
-    gdf["time"] = pd.date_range(
-        "2024-01-01 12:00",
-        periods=len(gdf),
-        freq="min",
-        tz="Europe/Zurich",
-    )
-    return gdf.copy()
+    gdf = sample_gdf.head(4).copy()  # small and readable
+
+    gdf["time"] = pd.to_datetime(
+        [
+            "2024-01-01 05:30",  # before sunrise
+            "2024-01-01 07:00",  # daytime
+            "2024-01-01 18:30",  # after sunset
+            "2024-01-01 23:00",  # night
+        ],
+        utc=True,
+    ).tz_convert("Europe/Zurich")
+
+    return gdf
 
 
 @pytest.fixture
