@@ -1,8 +1,6 @@
 import geopandas as gpd
 import pandas as pd
-import shapely
 import pytest
-from test_kde import sample_gdf
 from src.calculate_phases_of_the_day import calculate_phases_of_the_day
 from conftest import sample_gdf_with_time
 
