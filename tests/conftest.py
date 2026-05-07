@@ -29,12 +29,12 @@ def sample_gdf_with_time(sample_gdf):
         freq="min",
         tz="Europe/Zurich",
     )
-    return gdf
+    return gdf.copy()
 
 
 @pytest.fixture
 def sample_layer():
-    return make_sample_layer(crs=2056)
+    return make_sample_layer(crs=2056).copy()
 
 
 @pytest.fixture
