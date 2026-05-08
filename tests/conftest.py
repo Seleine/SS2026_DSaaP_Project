@@ -43,6 +43,14 @@ def sample_layer():
 
 
 @pytest.fixture
+def sample_gdf_with_month(sample_gdf):
+    rng = np.random.default_rng(seed=42)
+    gdf = sample_gdf.copy()
+    gdf["Month"] = rng.choice(["January", "February", "March"], size=len(gdf))
+    return gdf
+
+
+@pytest.fixture
 def home_buffer():
     polygon = Point(0, 0).buffer(2)
     return gpd.GeoSeries([polygon], crs=2056)
