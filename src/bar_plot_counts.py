@@ -29,10 +29,14 @@ def barplot_counts(data: gpd.GeoDataFrame, x_variable: str, title: str, plot_nam
     """
     if not isinstance(data, gpd.GeoDataFrame):
         raise TypeError(f"Expected a GeoDataFrame, got {type(data).__name__}.")
+    if not isinstance(x_variable, str):
+        raise TypeError(f"Expected x_variable to be a str, got {type(x_variable).__name__}.")
+    if not isinstance(title, str):
+        raise TypeError(f"Expected title to be a str, got {type(title).__name__}.")
+    if not isinstance(plot_name, str):
+        raise TypeError(f"Expected plot_name to be a str, got {type(plot_name).__name__}.")
     if x_variable not in data.columns:
         raise ValueError(f"Column '{x_variable}' not found in GeoDataFrame.")
-    if not title or not isinstance(title, str):
-        raise ValueError("Title must be a non-empty string.")
 
     ax = sns.countplot(data, x=x_variable)
     ax.set_title(title)
