@@ -43,6 +43,14 @@ def sample_layer():
 
 
 @pytest.fixture
+def sample_layer_with_static(sample_layer):
+
+    sample_layer["geom_buffer"] = sample_layer.geometry.buffer(50)
+    sample_layer["static"] = ["Static", "Not Static", "Static"]
+    return sample_layer
+
+
+@pytest.fixture
 def home_buffer():
     polygon = Point(0, 0).buffer(2)
     return gpd.GeoSeries([polygon], crs=2056)
