@@ -3,19 +3,11 @@
 ## Project goals
 This project analyses GPS tracking data from a [Tractive](https://tractive.com/) collar (.gpx from tractive), which is mostly worn by cats and dogs.
 The raw data is cleaned and is segmented along two dimensions: day phases (night, dawn, day, dusk) and movement phases (moving vs. static phases).
-For day phases and for (non-)static data the home range estimation (KDE) is computed.
-In the end, two interactive plots are generated as HTML files.
-The first plot shows the home range estimation for different day phases.
-The second plot shows the range for (non-)static data.
+Movement is classified using GPS positional accuracy buffers, where points falling within a customisable radius are treated as resting. 
 
-### Key Analyses
-- Home Range Estimation: Kernel Density Estimation (KDE) to compute utilisation distributions (95%, 75%, 50%, 25%, 10%).
-- Movement Classification: Distinguishing static (resting) from moving phases using GPS positional accuracy buffers (customised meter radius).
+For both segmentations a home range is estimated using Kernel Density Estimation (KDE), producing utilisation distribution contours at the 95%, 75%, 50%, 25%, and 10% levels. These contours show the areas the animal uses most intensively, from its full roaming range down to its core activity zone. 
 
-### Product
-- Two interactive plots saved as HTML showing the home range estimation (KDE, 95%, 75%, 50%, 25%, 10% UD).
-One distinguished by day phases, the other distinguished by (non-)static phases.
-Open street map is used as base layer.
+The main outputs consist of two interactive HTML maps, one visualising home range broken down by day phase, and the other comparing active versus resting periods. Open street map is used as base layer.
 
 ## Repository Structure
 
