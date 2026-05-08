@@ -161,6 +161,12 @@ def sample_plot_static_not_static(
         raise TypeError(f"Expected a GeoDataFrame, got {type(data).__name__}.")
     if data.empty:
         raise ValueError("GeoDataFrame is empty.")
+    if not isinstance(start_date, str):
+        raise TypeError(f"Expected start_date to be a str, got {type(start_date).__name__}.")
+    if not isinstance(end_date, str):
+        raise TypeError(f"Expected end_date to be a str, got {type(end_date).__name__}.")
+    if not isinstance(time_zone, str):
+        raise TypeError(f"Expected time_zone to be a str, got {type(time_zone).__name__}.")
 
     data_sample_plot = _filter_by_time(data, start_date, end_date, time_zone)
     m = _build_static_map(data_sample_plot)
