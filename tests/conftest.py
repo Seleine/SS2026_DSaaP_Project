@@ -6,6 +6,7 @@ import shapely
 from shapely.geometry import Point
 from tests._factories import make_sample_layer, make_sample_kde_result
 
+
 @pytest.fixture
 def sample_gdf():
     rng = np.random.default_rng(seed=42)  # deterministic

@@ -99,7 +99,9 @@ def plot_kde(data: gpd.GeoDataFrame, plot_name: str) -> folium.Map:
     if not isinstance(data, gpd.GeoDataFrame):
         raise TypeError(f"Expected a GeoDataFrame, got {type(data).__name__}.")
     if not isinstance(plot_name, str):
-        raise TypeError(f"Expected plot_name to be a str, got {type(plot_name).__name__}.")
+        raise TypeError(
+            f"Expected plot_name to be a str, got {type(plot_name).__name__}."
+        )
     required_columns = {"geometry", "area_km2", "Variable"}
     missing = required_columns - set(data.columns)
     if missing:

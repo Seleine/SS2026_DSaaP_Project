@@ -4,6 +4,7 @@ import geopandas as gpd
 from src.kde import calculate_kde_from_gps_points
 from conftest import sample_gdf
 
+
 def test_create_static_column_raises_if_data_is_not_geodataframe():
     with pytest.raises(TypeError):
         calculate_kde_from_gps_points(data="not a geodataframe", variable_name="test")

@@ -3,7 +3,6 @@ import folium
 import pytest
 import geopandas as gpd
 from src.kde_plot import plot_kde
-from conftest import sample_kde_result
 
 
 def test_plot_kde_raises_if_data_is_not_geodataframe():
@@ -53,6 +52,3 @@ def test_plot_kde_saves_html_and_returns_map(sample_kde_result, tmp_path, monkey
 
     assert (tmp_path / "plots" / "test.html").exists()
     assert isinstance(result, folium.Map)
-
-
-
