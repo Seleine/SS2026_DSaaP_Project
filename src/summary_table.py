@@ -1,14 +1,19 @@
 import geopandas as gpd
 import pandas as pd
+import os
+import webbrowser
 
 
-def summary_table(data: gpd.GeoDataFrame, datetime_col: str) -> pd.DataFrame:
+def summary_table(
+    data: gpd.GeoDataFrame, datetime_col: str, table_name: str
+) -> pd.DataFrame:
     """
     Create a summary table of the data to get an overview of the data quality.
 
     Args:
         data: Input GeoDataFrame.
         datetime_col: Input datetime column of type datetime.
+        table_name: string for the name of the table for saving
 
     Returns:
         DataFrame: Pandas DataFrame of the table.
@@ -18,8 +23,8 @@ def summary_table(data: gpd.GeoDataFrame, datetime_col: str) -> pd.DataFrame:
     """
     if not isinstance(data, gpd.GeoDataFrame):
         raise TypeError("Argument data must be gpd.GeoDataFrame")
-    elif not isinstance(datetime_col, str):
-        raise TypeError("Argument datetime_col must be a string")
+    elif not isinstance(datetime_col, str) or not isinstance(table_name, str):
+        raise TypeError("Argument datetime_col and table_name must be string")
 
     data = data.sort_values(by=datetime_col)
 
@@ -50,4 +55,36 @@ def summary_table(data: gpd.GeoDataFrame, datetime_col: str) -> pd.DataFrame:
         .reset_index()
     )
 
-    print(table)
+    if not os.path.exists("./quality_control"):
+        os.mkdir("./quality_control")
+
+    output_path = os.path.abspath(f"./quality_control/{table_name}.html")
+
+    (
+        table.style.set_table_styles(
+            [
+                {
+                    "selector": "th",
+                    "props": [
+                        ("background-color", "#4CAF50"),
+                        ("color", "white"),
+                        ("padding", "8px"),
+                    ],
+                },
+                {
+                    "selector": "td",
+                    "props": [("padding", "8px"), ("border", "1px solid #ddd")],
+                },
+                {
+                    "selector": "tr:nth-child(even)",
+                    "props": [("background-color", "#f2f2f2")],
+                },
+            ]
+        )
+        .hide(axis="index")
+        .to_html(output_path)
+    )
+
+    webbrowser.open(f"file://{output_path}")
+
+    return table

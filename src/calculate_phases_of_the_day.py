@@ -1,9 +1,11 @@
 from suncalc import get_times
 import geopandas as gpd
 import numpy as np
+import pandas as pd
 
 
-def calculate_phases_of_the_day(data: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
+def calculate_phases_of_the_day(data: gpd.GeoDataFrame, get_sun_times: callable = get_times,
+                                ) -> gpd.GeoDataFrame:  #  injected dependency
     """
     Assign a day phase label to each GPS point based on sun times.
 
@@ -18,7 +20,7 @@ def calculate_phases_of_the_day(data: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
 
     Returns
     -------
-    gpd.GeoDataFrame
+    gpd.GeoDataFrame,
         The input GeoDataFrame in LV95 (EPSG:2056) with an additional
         'dayphase' column containing one of:
         'Dawn', 'Daytime', 'Dusk', or 'Nighttime'.
@@ -26,15 +28,15 @@ def calculate_phases_of_the_day(data: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     # check if input is a GeoDataFrame
     if not isinstance(data, gpd.GeoDataFrame):
         raise TypeError(f"Expected a GeoDataFrame, got {type(data).__name__}.")
+    # check if GeoDataFrame is empty
+    if data.empty:
+        raise ValueError("GeoDataFrame is empty.")
     # check if 'time' column exists
     if "time" not in data.columns:
         raise ValueError("GeoDataFrame must contain a 'time' column.")
     # check if 'time' column is timezone-aware
-    if data["time"].dt.tz is None:
+    if not pd.api.types.is_datetime64tz_dtype(data["time"]):
         raise ValueError("The 'time' column must be timezone-aware.")
-    # check if GeoDataFrame is empty
-    if data.empty:
-        raise ValueError("GeoDataFrame is empty.")
     # check if geometry column exists and is valid
     if data.geometry.isnull().any():
         raise ValueError("GeoDataFrame contains null geometries.")
