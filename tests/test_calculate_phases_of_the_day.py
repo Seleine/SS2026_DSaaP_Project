@@ -4,7 +4,6 @@ import pytest
 from src.calculate_phases_of_the_day import calculate_phases_of_the_day
 
 
-# Auxillary functions
 def fake_get_times(times):
     """
     A fake implementation of suncalc.get_times that returns fixed times for testing purposes.
@@ -28,7 +27,6 @@ def fake_get_times(times):
     }
 
 
-# Actual test functions
 def test_crs_preserved(sample_gdf_with_dayphase_times):
     """
     Check that the CRS of the input GeoDataFrame is preserved in the output after calculating phases of the day.
