@@ -3,12 +3,7 @@ import geopandas as gpd
 from shapely.geometry import Point, Polygon
 from src.config import buffer_around_home
 from src.remove_home_points import remove_home_points
-
-
-@pytest.fixture
-def home_buffer():
-    polygon = Point(0, 0).buffer(2)
-    return gpd.GeoSeries([polygon], crs=2056)
+from conftest import sample_gdf
 
 
 def test_remove_home_points_intersection():
