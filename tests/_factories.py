@@ -3,6 +3,7 @@ import shapely
 import datetime as datetime
 import numpy as np
 
+
 def make_sample_layer(crs: int = 2056) -> gpd.GeoDataFrame:
     geometry = gpd.GeoSeries(
         [

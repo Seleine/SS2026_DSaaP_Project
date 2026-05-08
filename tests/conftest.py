@@ -3,8 +3,9 @@ import numpy as np
 import geopandas as gpd
 import pandas as pd
 import shapely
-from shapely.geometry import Point, Polygon
+from shapely.geometry import Point
 from tests._factories import make_sample_layer
+
 
 @pytest.fixture
 def sample_gdf():
