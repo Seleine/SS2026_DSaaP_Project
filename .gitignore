@@ -3,3 +3,5 @@
 src/home_coords.py
 .coverage
 plots/
+o.prof
+o.folded
