@@ -1,6 +1,6 @@
 import geopandas as gpd
 import shapely
-import datetime as datetime
+from datetime import datetime
 import numpy as np
 
 
