@@ -1,7 +1,6 @@
 [project]
 name = "ss2026-dsaap-project"
 version = "0.1.0"
-description = "Add your description here"
 requires-python = ">=3.13"
 dependencies = [
     "folium>=0.20.0",
