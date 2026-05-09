@@ -2,7 +2,7 @@ import geopandas as gpd
 import pandas as pd
 import pytest
 from src.calculate_phases_of_the_day import calculate_phases_of_the_day
-from conftest import sample_gdf_with_time
+
 
 # Auxillary functions
 def fake_get_times(times, lon, lat):
@@ -30,6 +30,7 @@ def fake_get_times(times, lon, lat):
         "sunset": times + pd.Timedelta(minutes=30),
         "dusk": times + pd.Timedelta(hours=1),
     }
+
 
 # Actual test functions
 def test_crs_preserved(sample_gdf_with_time):

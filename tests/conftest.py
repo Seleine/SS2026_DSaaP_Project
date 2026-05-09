@@ -3,8 +3,9 @@ import numpy as np
 import geopandas as gpd
 import pandas as pd
 import shapely
-from shapely.geometry import Point, Polygon
+from shapely.geometry import Point
 from tests._factories import make_sample_layer
+
 
 @pytest.fixture
 def sample_gdf():
@@ -40,6 +41,14 @@ def sample_gdf_with_dayphase_times(sample_gdf):
 @pytest.fixture
 def sample_layer():
     return make_sample_layer(crs=2056).copy()
+
+
+@pytest.fixture
+def sample_gdf_with_month(sample_gdf):
+    rng = np.random.default_rng(seed=42)
+    gdf = sample_gdf.copy()
+    gdf["Month"] = rng.choice(["January", "February", "March"], size=len(gdf))
+    return gdf
 
 
 @pytest.fixture
