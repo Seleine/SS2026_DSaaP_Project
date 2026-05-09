@@ -5,15 +5,15 @@ from geopandas.testing import assert_geodataframe_equal
 from src.speed import calculate_timelag_steplength_speed
 
 
-def test_calculate_timelag_steplength_speed_should_adds_columns_when_input_valid(sample_layer):
-    # Act
+def test_calculate_timelag_steplength_speed_should_adds_columns_when_input_valid(
+    sample_layer,
+):
     result = calculate_timelag_steplength_speed(
-        data=sample_layer.copy(),   # important: avoid side effects
+        data=sample_layer.copy(),
         datetime_col="time",
         geometry_col="geometry",
     )
 
-    # Assert
     expected = sample_layer.copy()
 
     expected["timelag"] = [583.0, 599.0, np.nan]

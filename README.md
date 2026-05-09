@@ -84,6 +84,8 @@ The file `config.py` contains several variables which must be provided by the us
 Open terminal in your IDE and run:
 
 ```bash
+uv sync
+
 uv run src/main.py
 ```
 

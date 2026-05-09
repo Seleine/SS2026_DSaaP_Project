@@ -121,6 +121,7 @@ def main():
     )
 
     kde_dayphases = gpd.pd.concat([kde_night, kde_day, kde_dusk, kde_dawn])
+    kde_dayphases = gpd.GeoDataFrame(kde_dayphases)
 
     plot_kde(data=kde_dayphases, plot_name="kde_dayphases")
 

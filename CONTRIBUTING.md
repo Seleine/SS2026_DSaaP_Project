@@ -37,6 +37,7 @@ See the README for full installation and setup instructions.
 
 ## Pull Request Process
 
+- Make sure formatting and linting is correct (enter `uvx ruff check --fix` and `uvx ruff format` in terminal)
 - Make sure your branch is up to date with `main` before opening a PR.
 - Ensure all existing tests pass (`uv run pytest tests/`).
 - Add or update tests if your change affects analysis logic.
