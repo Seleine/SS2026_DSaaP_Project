@@ -6,31 +6,21 @@ import os
 
 
 def test_summary_table(sample_layer, capsys):
-    # Act
     summary_table(data=sample_layer, datetime_col="time", table_name="table")
 
     captured = capsys.readouterr()
 
     output = captured.out
 
-    # Assert
     assert (
         output == ""
     )  # Because we produce a html now, this is always empty before rendering!
 
-    # assert "Month" in output
-    # assert "Median Interval" in output
-    # assert "10.0" in output
-    # assert len(output) > 0
-
-
 def test_summary_table_returns_expected_dataframe(sample_layer):
     table = summary_table(data=sample_layer, datetime_col="time", table_name="table")
 
-    # Basic type
     assert isinstance(table, pd.DataFrame)
 
-    # Expected columns
     expected_columns = [
         "Month",
         "Median Interval (min)",
@@ -42,8 +32,6 @@ def test_summary_table_returns_expected_dataframe(sample_layer):
         "Proportion (%)",
     ]
     assert list(table.columns) == expected_columns
-
-    # Non-empty
     assert len(table) > 0
 
 
