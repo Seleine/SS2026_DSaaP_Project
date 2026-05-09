@@ -4,8 +4,10 @@ import numpy as np
 import pandas as pd
 
 
-def calculate_phases_of_the_day(data: gpd.GeoDataFrame, get_sun_times: callable = get_times,
-                                ) -> gpd.GeoDataFrame:  #  injected dependency
+def calculate_phases_of_the_day(
+    data: gpd.GeoDataFrame,
+    get_sun_times: callable = get_times,
+) -> gpd.GeoDataFrame:  #  injected dependency
     """
     Assign a day phase label to each GPS point based on sun times.
 

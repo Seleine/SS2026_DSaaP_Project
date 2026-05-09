@@ -3,7 +3,6 @@ import geopandas as gpd
 from shapely.geometry import Point, Polygon
 from src.config import buffer_around_home
 from src.remove_home_points import remove_home_points
-from conftest import sample_gdf
 
 
 def test_remove_home_points_intersection():
@@ -65,12 +64,12 @@ def test_null_geometry_raises(home_buffer):
 
 
 def test_null_geometry_in_data_raises(home_buffer):
-     data = gpd.GeoDataFrame(
-         geometry=[Point(0, 0), None],
-         crs=2056,
-     )
-     with pytest.raises(ValueError, match="null geometries"):
-         remove_home_points(data, home_buffer)
+    data = gpd.GeoDataFrame(
+        geometry=[Point(0, 0), None],
+        crs=2056,
+    )
+    with pytest.raises(ValueError, match="null geometries"):
+        remove_home_points(data, home_buffer)
 
 
 def test_empty_home_buffer_raises(sample_gdf):
@@ -94,8 +93,8 @@ def test_only_first_home_buffer_geometry_is_used():
 
     data = gpd.GeoDataFrame(
         geometry=[
-            Point(1, 1),        # intersects buffer_1 → removed
-            Point(100, 100),    # intersects buffer_2 → should remain
+            Point(1, 1),
+            Point(100, 100),
         ],
         crs=2056,
     )
