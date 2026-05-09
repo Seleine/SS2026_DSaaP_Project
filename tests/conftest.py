@@ -23,7 +23,7 @@ def sample_gdf_with_dayphase_times(sample_gdf):
     """
     Create a sample GeoDataFrame with a 'time' column with times spanning across the day to test calculate_phases_of_the_day.
     """
-    gdf = sample_gdf.head(4).copy()  # small and readable
+    gdf = sample_gdf.head(4).copy()
 
     gdf["time"] = pd.to_datetime(
         [
