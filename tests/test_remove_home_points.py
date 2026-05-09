@@ -93,8 +93,8 @@ def test_only_first_home_buffer_geometry_is_used():
 
     data = gpd.GeoDataFrame(
         geometry=[
-            Point(1, 1),  # intersects buffer_1 → removed
-            Point(100, 100),  # intersects buffer_2 → should remain
+            Point(1, 1),
+            Point(100, 100),
         ],
         crs=2056,
     )

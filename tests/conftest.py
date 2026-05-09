@@ -7,6 +7,7 @@ from shapely.geometry import Point
 from tests._factories import make_sample_layer, make_sample_kde_result
 
 
+
 @pytest.fixture
 def sample_gdf():
     rng = np.random.default_rng(seed=42)  # deterministic
@@ -23,7 +24,7 @@ def sample_gdf_with_dayphase_times(sample_gdf):
     """
     Create a sample GeoDataFrame with a 'time' column with times spanning across the day to test calculate_phases_of_the_day.
     """
-    gdf = sample_gdf.head(4).copy()  # small and readable
+    gdf = sample_gdf.head(4).copy()
 
     gdf["time"] = pd.to_datetime(
         [
@@ -41,6 +42,19 @@ def sample_gdf_with_dayphase_times(sample_gdf):
 @pytest.fixture
 def sample_layer():
     return make_sample_layer(crs=2056).copy()
+
+
+@pytest.fixture
+def sample_layer_with_static(sample_layer):
+
+    sample_layer["geom_buffer"] = sample_layer.geometry.buffer(50)
+    sample_layer["static"] = ["Static", "Not Static", "Static"]
+    return sample_layer
+def sample_gdf_with_month(sample_gdf):
+    rng = np.random.default_rng(seed=42)
+    gdf = sample_gdf.copy()
+    gdf["Month"] = rng.choice(["January", "February", "March"], size=len(gdf))
+    return gdf
 
 
 @pytest.fixture
