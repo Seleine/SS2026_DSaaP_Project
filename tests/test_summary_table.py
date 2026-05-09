@@ -12,6 +12,7 @@ def test_summary_table(sample_layer, capsys):
 
     output = captured.out
 
+    # Assert
     assert (
         output == ""
     )  # Because we produce a html now, this is always empty before rendering!

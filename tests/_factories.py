@@ -31,3 +31,42 @@ def make_sample_layer(crs: int = 2056) -> gpd.GeoDataFrame:
     }
 
     return gpd.GeoDataFrame(data, crs=crs)
+
+
+def make_sample_kde_result(crs: int = 2056) -> gpd.GeoDataFrame:
+    from shapely.geometry import Point
+
+    records = [
+        {
+            "percent": 95,
+            "geometry": Point(2_600_000, 1_200_000).buffer(1000),
+            "area_km2": 3.14,
+            "Variable": "test",
+        },
+        {
+            "percent": 75,
+            "geometry": Point(2_600_000, 1_200_000).buffer(750),
+            "area_km2": 1.77,
+            "Variable": "test",
+        },
+        {
+            "percent": 50,
+            "geometry": Point(2_600_000, 1_200_000).buffer(500),
+            "area_km2": 0.79,
+            "Variable": "test",
+        },
+        {
+            "percent": 25,
+            "geometry": Point(2_600_000, 1_200_000).buffer(250),
+            "area_km2": 0.20,
+            "Variable": "test",
+        },
+        {
+            "percent": 10,
+            "geometry": Point(2_600_000, 1_200_000).buffer(100),
+            "area_km2": 0.03,
+            "Variable": "test",
+        },
+    ]
+
+    return gpd.GeoDataFrame(records, crs=crs)

@@ -71,7 +71,7 @@ def get_data_extend(data_wgs: gpd.GeoDataFrame) -> list[list[float]]:
     return [[bounds[1], bounds[0]], [bounds[3], bounds[2]]]
 
 
-def plot_kde(data: gpd.pd.DataFrame, plot_name: str) -> folium.Map:
+def plot_kde(data: gpd.GeoDataFrame, plot_name: str) -> folium.Map:
     """
     Plot kernel density estimation (KDE) home ranges as an interactive leaflet map.
 
@@ -80,7 +80,7 @@ def plot_kde(data: gpd.pd.DataFrame, plot_name: str) -> folium.Map:
     default browser.
 
     Parameters:
-    data: gpd.pd.DataFrame: containing the KDE polygons. Must include:
+    data: gpd.GeoDataFrame: containing the KDE polygons. Must include:
             - geometry: Polygon or MultiPolygon geometries.
             - area_km2: Numeric column with the area_km2 of each polygon (km²).
             - Variable: Categorical column used to split layers.
@@ -96,8 +96,12 @@ def plot_kde(data: gpd.pd.DataFrame, plot_name: str) -> folium.Map:
         If required columns ('geometry', 'area_km2', 'Variable') are missing,
         or if the GeoDataFrame is empty.
     """
-    if not isinstance(data, gpd.pd.DataFrame):
-        raise TypeError(f"Expected a DataFrame, got {type(data).__name__}.")
+    if not isinstance(data, gpd.GeoDataFrame):
+        raise TypeError(f"Expected a GeoDataFrame, got {type(data).__name__}.")
+    if not isinstance(plot_name, str):
+        raise TypeError(
+            f"Expected plot_name to be a str, got {type(plot_name).__name__}."
+        )
     required_columns = {"geometry", "area_km2", "Variable"}
     missing = required_columns - set(data.columns)
     if missing:

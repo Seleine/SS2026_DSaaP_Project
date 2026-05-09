@@ -4,7 +4,8 @@ import geopandas as gpd
 import pandas as pd
 import shapely
 from shapely.geometry import Point
-from tests._factories import make_sample_layer
+from tests._factories import make_sample_layer, make_sample_kde_result
+
 
 
 @pytest.fixture
@@ -60,3 +61,8 @@ def sample_gdf_with_month(sample_gdf):
 def home_buffer():
     polygon = Point(0, 0).buffer(2)
     return gpd.GeoSeries([polygon], crs=2056)
+
+
+@pytest.fixture
+def sample_kde_result():
+    return make_sample_kde_result(crs=2056).copy()
