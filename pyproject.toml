@@ -1,7 +1,6 @@
 [project]
 name = "ss2026-dsaap-project"
 version = "0.1.0"
-description = "Add your description here"
 requires-python = ">=3.13"
 dependencies = [
     "folium>=0.20.0",
@@ -23,4 +22,5 @@ pythonpath = [".", "src"]
 dev = [
     "coverage>=7.13.5",
     "pytest>=9.0.2",
+    "pytest-cov>=7.1.0",
 ]
