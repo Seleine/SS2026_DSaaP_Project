@@ -3,11 +3,8 @@
 src/home_coords.py
 .coverage
 plots/
-<<<<<<< docs/add-profiling
 o.prof
 o.folded
-=======
-__pycache__/ # Python bytecode
+__pycache__/
 quality_control/
->>>>>>> main
 .xml

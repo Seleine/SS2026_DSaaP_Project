@@ -7,7 +7,6 @@ from shapely.geometry import Point
 from tests._factories import make_sample_layer, make_sample_kde_result
 
 
-
 @pytest.fixture
 def sample_gdf():
     rng = np.random.default_rng(seed=42)  # deterministic
@@ -50,6 +49,9 @@ def sample_layer_with_static(sample_layer):
     sample_layer["geom_buffer"] = sample_layer.geometry.buffer(50)
     sample_layer["static"] = ["Static", "Not Static", "Static"]
     return sample_layer
+
+
+@pytest.fixture
 def sample_gdf_with_month(sample_gdf):
     rng = np.random.default_rng(seed=42)
     gdf = sample_gdf.copy()

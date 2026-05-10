@@ -17,6 +17,7 @@ def test_summary_table(sample_layer, capsys):
         output == ""
     )  # Because we produce a html now, this is always empty before rendering!
 
+
 def test_summary_table_returns_expected_dataframe(sample_layer):
     table = summary_table(data=sample_layer, datetime_col="time", table_name="table")
 
