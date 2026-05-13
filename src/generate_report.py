@@ -10,10 +10,10 @@ def _embed_png(path: str) -> str:
         data = base64.b64encode(f.read()).decode("utf-8")
     filename = Path(path).name
     return (
-        f'<figure>'
+        f"<figure>"
         f'<img src="data:image/png;base64,{data}" alt="{filename}">'
-        f'<figcaption>{filename}</figcaption>'
-        f'</figure>'
+        f"<figcaption>{filename}</figcaption>"
+        f"</figure>"
     )
 
 
@@ -25,13 +25,13 @@ def _embed_html(path: str) -> str:
     escaped = content.replace("&", "&amp;").replace('"', "&quot;")
     filename = Path(path).name
     return (
-        f'<figure>'
+        f"<figure>"
         f'<iframe srcdoc="{escaped}" '
         f'title="{filename}" '
         f'style="width:100%; height:520px; border:none; border-radius:6px;">'
-        f'</iframe>'
-        f'<figcaption>{filename}</figcaption>'
-        f'</figure>'
+        f"</iframe>"
+        f"<figcaption>{filename}</figcaption>"
+        f"</figure>"
     )
 
 
@@ -73,10 +73,10 @@ def _render_section(section: dict, base_dir: str) -> str:
 
 
 def generate_report(
-        structure: list[dict],
-        output_path: str = "report.html",
-        base_dir: str = ".",
-        report_title: str = "Report",
+    structure: list[dict],
+    output_path: str = "report.html",
+    base_dir: str = ".",
+    report_title: str = "Report",
 ) -> str:
     """
     Generate a self-contained HTML report.
