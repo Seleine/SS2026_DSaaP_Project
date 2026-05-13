@@ -1,7 +1,6 @@
 import geopandas as gpd
 import pandas as pd
 import os
-import webbrowser
 
 
 def summary_table(
@@ -84,7 +83,5 @@ def summary_table(
         .hide(axis="index")
         .to_html(output_path)
     )
-
-    webbrowser.open(f"file://{output_path}")
 
     return table
