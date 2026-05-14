@@ -6,6 +6,8 @@ import webbrowser
 import os
 from pathlib import Path
 
+from utils.output import get_output_dir
+
 
 def _filter_by_time(
     data: gpd.GeoDataFrame, start_date: str, end_date: str, time_zone: str
@@ -178,12 +180,8 @@ def sample_plot_static_not_static(
     data_sample_plot = _filter_by_time(data, start_date, end_date, time_zone)
     m = _build_static_map(data_sample_plot)
 
-    # Base output directory (local: ./plots, Docker: /app/plots via env)
-
     # Project root = parent of src/
-    PROJECT_ROOT = Path(__file__).resolve().parent.parent
-    plots_dir = Path(os.environ.get("OUTPUT_DIR", PROJECT_ROOT / "plots"))
-    plots_dir.mkdir(parents=True, exist_ok=True)
+    plots_dir = get_output_dir()
 
     # Output file
     output_html = plots_dir / "sample_plot_static.html"
@@ -193,4 +191,3 @@ def sample_plot_static_not_static(
     # Only open browser when NOT running in Docker
     if os.environ.get("IN_DOCKER") != "1":
         webbrowser.open(f"file://{output_html.resolve()}")
-
