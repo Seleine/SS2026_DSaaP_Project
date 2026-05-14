@@ -1,7 +1,6 @@
 import geopandas as gpd
 import folium
 from folium.plugins import GroupedLayerControl
-import os
 import webbrowser
 import branca.colormap as cm
 from utils.output import get_output_dir
