@@ -6,7 +6,7 @@ ENV PYTHONUNBUFFERED=1
 WORKDIR /app
 
 COPY pyproject.toml .
-COPY config.py .
+COPY src/config.py .
 COPY src/ src/
 
 RUN pip install --no-cache-dir .
