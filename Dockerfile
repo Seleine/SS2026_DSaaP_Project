@@ -8,6 +8,7 @@ WORKDIR /app
 COPY pyproject.toml .
 COPY src/config.py .
 COPY src/ src/
+COPY data_tractive/ data_tractive/
 
 RUN pip install --no-cache-dir .
 
