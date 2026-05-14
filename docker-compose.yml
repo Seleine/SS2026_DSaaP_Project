@@ -2,6 +2,6 @@ version: "3.9"
 
 services:
   analysis:
-    image: dsaap-test
+    image: cat-movement-analysis
     volumes:
       - ./plots:/app/plots
