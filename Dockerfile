@@ -11,5 +11,5 @@ COPY src/ src/
 
 RUN pip install --no-cache-dir .
 
-ENTRYPOINT ["python", "src/analysis.py"]
+ENTRYPOINT ["python", "src/main.py"]
 CMD []
