@@ -180,14 +180,10 @@ def sample_plot_static_not_static(
     data_sample_plot = _filter_by_time(data, start_date, end_date, time_zone)
     m = _build_static_map(data_sample_plot)
 
-    # Project root = parent of src/
     plots_dir = get_output_dir()
 
-    # Output file
     output_html = plots_dir / "sample_plot_static.html"
     m.save(output_html)
-    output_html.touch() # force timestamp update
+    output_html.touch()
 
-    # Only open browser when NOT running in Docker
-    if os.environ.get("IN_DOCKER") != "1":
-        webbrowser.open(f"file://{output_html.resolve()}")
+    webbrowser.open(f"file://{output_html.resolve()}")
