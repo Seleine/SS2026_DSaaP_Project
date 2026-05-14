@@ -4,6 +4,7 @@ from folium.plugins import GroupedLayerControl
 import os
 import webbrowser
 import branca.colormap as cm
+from utils.output import get_output_dir
 
 
 def collect_feature_groups(
@@ -148,11 +149,12 @@ def plot_kde(data: gpd.GeoDataFrame, plot_name: str) -> folium.Map:
     # Fit map to data extent
     m.fit_bounds(get_data_extend(data_wgs=data_wgs))
 
-    if not os.path.exists("./plots"):
-        os.mkdir("./plots")
+    plots_dir = get_output_dir()
 
-    output_html = os.path.abspath(f"./plots/{plot_name}.html")
+    output_html = plots_dir / "{plot_name}.html"
     m.save(output_html)
-    webbrowser.open(f"file://{output_html}")
+    output_html.touch()
+
+    webbrowser.open(f"file://{output_html.resolve()}")
 
     return m
