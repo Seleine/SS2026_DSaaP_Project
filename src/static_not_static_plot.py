@@ -3,9 +3,6 @@ import pandas as pd
 from shapely.geometry import LineString
 import config
 import webbrowser
-import os
-from pathlib import Path
-
 from utils.output import get_output_dir
 
 
