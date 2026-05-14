@@ -150,7 +150,7 @@ def plot_kde(data: gpd.GeoDataFrame, plot_name: str) -> folium.Map:
 
     plots_dir = get_output_dir()
 
-    output_html = plots_dir / "{plot_name}.html"
+    output_html = plots_dir / f"{plot_name}.html"
     m.save(output_html)
     output_html.touch()
 
