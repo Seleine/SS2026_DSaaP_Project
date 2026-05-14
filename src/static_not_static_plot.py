@@ -179,7 +179,10 @@ def sample_plot_static_not_static(
     m = _build_static_map(data_sample_plot)
 
     # Base output directory (local: ./plots, Docker: /app/plots via env)
-    plots_dir = Path(os.environ.get("OUTPUT_DIR", "plots"))
+
+    # Project root = parent of src/
+    PROJECT_ROOT = Path(__file__).resolve().parent.parent
+    plots_dir = Path(os.environ.get("OUTPUT_DIR", PROJECT_ROOT / "plots"))
     plots_dir.mkdir(parents=True, exist_ok=True)
 
     # Output file
