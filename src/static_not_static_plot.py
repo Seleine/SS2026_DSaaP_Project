@@ -185,6 +185,7 @@ def sample_plot_static_not_static(
     # Output file
     output_html = plots_dir / "sample_plot_static.html"
     m.save(output_html)
+    output_html.touch() # force timestamp update
 
     # Only open browser when NOT running in Docker
     if os.environ.get("IN_DOCKER") != "1":
