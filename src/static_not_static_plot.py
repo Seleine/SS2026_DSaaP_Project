@@ -4,6 +4,7 @@ from shapely.geometry import LineString
 import config
 import webbrowser
 import os
+from pathlib import Path
 
 
 def _filter_by_time(
@@ -177,9 +178,15 @@ def sample_plot_static_not_static(
     data_sample_plot = _filter_by_time(data, start_date, end_date, time_zone)
     m = _build_static_map(data_sample_plot)
 
-    if not os.path.exists("./plots"):
-        os.mkdir("./plots")
+    # Base output directory (local: ./plots, Docker: /app/plots via env)
+    plots_dir = Path(os.environ.get("OUTPUT_DIR", "plots"))
+    plots_dir.mkdir(parents=True, exist_ok=True)
 
-    output_html = os.path.abspath("./plots/sample_plot_static.html")
+    # Output file
+    output_html = plots_dir / "sample_plot_static.html"
     m.save(output_html)
-    webbrowser.open(f"file://{output_html}")
+
+    # Only open browser when NOT running in Docker
+    if os.environ.get("IN_DOCKER") != "1":
+        webbrowser.open(f"file://{output_html.resolve()}")
+
