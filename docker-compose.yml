@@ -1,0 +1,7 @@
+version: "3.9"
+
+services:
+  analysis:
+    image: dsaap-test
+    volumes:
+      - ./plots:/app/plots
