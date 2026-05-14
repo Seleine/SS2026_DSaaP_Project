@@ -57,7 +57,7 @@ docker build -t cat-movement-analysis .
 Once the image is built, you can run a container with the following command:
 
 ```bash
-docker run --rm dsaap-test
+docker run --rm cat-movement-analysis
 ```
 
 To enter the container and work on the project files, run:
