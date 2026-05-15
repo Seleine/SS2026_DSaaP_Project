@@ -8,6 +8,6 @@ services:
 
   tests:
     image: cat-movement-analysis
-    entrypoint: test
+    entrypoint: pytest
     command: -v
 
