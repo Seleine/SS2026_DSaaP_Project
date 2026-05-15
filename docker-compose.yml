@@ -15,11 +15,16 @@ services:
     image: cat-movement-analysis
     entrypoint: ruff
     command: check . --force-exclude
+    volumes:
+      - .:/app
 
   format:
     image: cat-movement-analysis
     entrypoint: ruff
     command: format . --check --force-exclude
+    volumes:
+      - .:/app
+
 
   lint-fix:
     image: cat-movement-analysis
