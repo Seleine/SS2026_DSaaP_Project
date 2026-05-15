@@ -66,4 +66,6 @@ def test_sample_plot_static_not_static_saves_and_opens(
         time_zone="Europe/Zurich",
     )
 
-    assert (tmp_path / "plots" / "sample_plot_static.html").exists(), "HTML output was not created"
+    assert (tmp_path / "plots" / "sample_plot_static.html").exists(), (
+        "HTML output was not created"
+    )
