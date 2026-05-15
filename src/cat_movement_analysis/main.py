@@ -1,7 +1,7 @@
 ########################################
 # Libraries
 ########################################
-import config
+from . import config
 import geopandas as gpd
 import home_coords
 from read_gps_data import read_gps_data

@@ -55,7 +55,7 @@ Therefore, the file `home_coords.py` must be manually created by the user follow
 ```python
 import geopandas as gpd
 from shapely import Point
-import config
+from . import config
 
 # Please enter your home coordinates ("Easting", "Northing") in the correct CRS
 point = Point(["Easting", "Northing"])

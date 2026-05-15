@@ -2,7 +2,7 @@ from pathlib import Path
 import geopandas as gpd
 import pandas as pd
 import glob
-import config
+from . import config
 import os
 
 
