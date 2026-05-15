@@ -2,7 +2,6 @@ import geopandas as gpd
 import folium
 from folium.plugins import GroupedLayerControl
 import os
-import webbrowser
 import branca.colormap as cm
 
 
@@ -153,6 +152,5 @@ def plot_kde(data: gpd.GeoDataFrame, plot_name: str) -> folium.Map:
 
     output_html = os.path.abspath(f"./plots/{plot_name}.html")
     m.save(output_html)
-    webbrowser.open(f"file://{output_html}")
 
     return m

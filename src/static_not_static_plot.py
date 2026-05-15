@@ -2,7 +2,6 @@ import geopandas as gpd
 import pandas as pd
 from shapely.geometry import LineString
 import config
-import webbrowser
 import os
 
 
@@ -182,4 +181,3 @@ def sample_plot_static_not_static(
 
     output_html = os.path.abspath("./plots/sample_plot_static.html")
     m.save(output_html)
-    webbrowser.open(f"file://{output_html}")
