@@ -54,8 +54,8 @@ def summary_table(
         .reset_index()
     )
 
-    if not os.path.exists("./quality_control"):
-        os.mkdir("./quality_control")
+    if not os.path.exists("quality_control"):
+        os.mkdir("quality_control")
 
     output_path = os.path.abspath(f"./quality_control/{table_name}.html")
 

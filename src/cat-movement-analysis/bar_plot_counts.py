@@ -44,8 +44,8 @@ def barplot_counts(data: gpd.GeoDataFrame, x_variable: str, title: str, plot_nam
     ax = sns.countplot(data, x=x_variable)
     ax.set_title(title)
 
-    if not os.path.exists("./quality_control"):
-        os.mkdir("./quality_control")
+    if not os.path.exists("quality_control"):
+        os.mkdir("quality_control")
 
     output_path = os.path.abspath(
         f"./quality_control/barplot_count_data_points_{plot_name}.png"

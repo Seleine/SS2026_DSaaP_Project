@@ -210,6 +210,6 @@ if __name__ == "__main__":
     generate_report(
         structure=STRUCTURE,
         output_path="report.html",
-        base_dir=".",
+        base_dir="..",
         report_title="Report",
     )
