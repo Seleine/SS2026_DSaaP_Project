@@ -2,7 +2,6 @@ import shapely
 import pytest
 import geopandas as gpd
 from cat_movement_analysis.kde import calculate_kde_from_gps_points
-from conftest import sample_gdf
 
 
 def test_create_static_column_raises_if_data_is_not_geodataframe():
