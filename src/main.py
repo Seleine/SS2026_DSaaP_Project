@@ -158,62 +158,62 @@ def main():
 
     plot_kde(data=kde_movement, plot_name="kde_movement")
 
+
 def build_report():
     STRUCTURE = [
-            {
-                "title": "Quality Control",
-                "level": 2,
-                "content": [],
-                "text": "This section summarises the quality control steps applied to the raw GPS data.",
-                "subsections": [
-                    {
-                        "title": "Summary Table",
-                        "level": 3,
-                        "text": "The first table gives an overview of the data points before outlier deletion. Outliers are data points which result in a speed value larger than the set value in the config file. Furthermore, data points which have a time lag smaller than the specified value in the config file are deleted, which increases data quality. Therefore, in the second table there should be no data points with a time lag smaller than the set value.",
-                        "content": [
-                            "quality_control/summary_table_before_outlier_deletion.html",
-                            "quality_control/summary_table_after_outlier_deletion.html",
-                        ],
-                    },
-                    {
-                        "title": "Number of Data Points",
-                        "level": 3,
-                        "text": "These two plots show the number of data points after outlier deletion, either separated by day or movement phase.",
-                        "content": [
-                            "quality_control/barplot_count_data_points_dayphases.png",
-                            "quality_control/barplot_count_data_points_movement.png",
-                        ],
-                    },
-                    {
-                        "title": "Sample Plot for Movement Phases",
-                        "level": 3,
-                        "text": "This interactive map shows the idea behind the separation of moving and static phases. Is a point within the set buffer of the previous or following point, it is determined as static.",
-                        "content": [
-                            "plots/sample_plot_static.html",
-                        ],
-                    },
-                ],
-            },
-            {
-                "title": "Products",
-                "level": 2,
-                "text": "The interactive maps show the KDE for the different phases.",
-                "content": [
-                    "plots/kde_dayphases.html",
-                    "plots/kde_movement.html",
-                ],
-            },
-        ]
+        {
+            "title": "Quality Control",
+            "level": 2,
+            "content": [],
+            "text": "This section summarises the quality control steps applied to the raw GPS data.",
+            "subsections": [
+                {
+                    "title": "Summary Table",
+                    "level": 3,
+                    "text": "The first table gives an overview of the data points before outlier deletion. Outliers are data points which result in a speed value larger than the set value in the config file. Furthermore, data points which have a time lag smaller than the specified value in the config file are deleted, which increases data quality. Therefore, in the second table there should be no data points with a time lag smaller than the set value.",
+                    "content": [
+                        "quality_control/summary_table_before_outlier_deletion.html",
+                        "quality_control/summary_table_after_outlier_deletion.html",
+                    ],
+                },
+                {
+                    "title": "Number of Data Points",
+                    "level": 3,
+                    "text": "These two plots show the number of data points after outlier deletion, either separated by day or movement phase.",
+                    "content": [
+                        "quality_control/barplot_count_data_points_dayphases.png",
+                        "quality_control/barplot_count_data_points_movement.png",
+                    ],
+                },
+                {
+                    "title": "Sample Plot for Movement Phases",
+                    "level": 3,
+                    "text": "This interactive map shows the idea behind the separation of moving and static phases. Is a point within the set buffer of the previous or following point, it is determined as static.",
+                    "content": [
+                        "plots/sample_plot_static.html",
+                    ],
+                },
+            ],
+        },
+        {
+            "title": "Products",
+            "level": 2,
+            "text": "The interactive maps show the KDE for the different phases.",
+            "content": [
+                "plots/kde_dayphases.html",
+                "plots/kde_movement.html",
+            ],
+        },
+    ]
 
-        generate_report(
-            structure=STRUCTURE,
-            output_path="report.html",
-            base_dir=".",
-            report_title="Report",
-        )
+    generate_report(
+        structure=STRUCTURE,
+        output_path="report.html",
+        base_dir=".",
+        report_title="Report",
+    )
+
 
 if __name__ == "__main__":
     main()
     build_report()
-
-
