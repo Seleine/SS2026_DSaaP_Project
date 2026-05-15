@@ -24,13 +24,13 @@ services:
   lint-fix:
     image: cat-movement-analysis
     entrypoint: ruff
-    command: check . --fix
+    command: check . --fix --force-exclude
     volumes:
       - .:/app
 
   format-fix:
     image: cat-movement-analysis
     entrypoint: ruff
-    command: format .
+    command: format . --force-exclude
     volumes:
       - .:/app
