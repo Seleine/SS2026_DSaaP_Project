@@ -72,6 +72,7 @@ To save and later access the .html output from outside the container enter:
 ```bash
 mkdir plots
 docker compose up # run container and save output in plots folder
+docker compose run --rm tests # test docker image / run tests in container
 docker compose down # stop container
 ```
 
