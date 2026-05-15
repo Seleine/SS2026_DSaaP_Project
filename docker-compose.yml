@@ -21,6 +21,13 @@ services:
     entrypoint: ruff
     command: format --check
 
+  lint-fix:
+    image: cat-movement-analysis
+    entrypoint: ruff
+    command: check . --fix
+    volumes:
+      - .:/app
+
   format-fix:
     image: cat-movement-analysis
     entrypoint: ruff
