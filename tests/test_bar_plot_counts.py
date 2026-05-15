@@ -1,5 +1,5 @@
 import pytest
-from src.bar_plot_counts import barplot_counts
+from cat_movement_analysis.bar_plot_counts import barplot_counts
 
 
 def test_barplot_counts_raises_if_data_is_not_geodataframe():

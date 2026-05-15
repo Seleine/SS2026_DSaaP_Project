@@ -1,7 +1,7 @@
 import shapely
 import pytest
 import geopandas as gpd
-from src.kde import calculate_kde_from_gps_points
+from cat_movement_analysis.kde import calculate_kde_from_gps_points
 from conftest import sample_gdf
 
 

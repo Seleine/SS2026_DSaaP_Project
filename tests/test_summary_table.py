@@ -1,6 +1,6 @@
 import pytest
 import geopandas as gpd
-from src.summary_table import summary_table
+from cat_movement_analysis.summary_table import summary_table
 import pandas as pd
 import os
 

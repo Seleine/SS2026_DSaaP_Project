@@ -1,8 +1,8 @@
 import pytest
 import geopandas as gpd
 from shapely.geometry import Point, Polygon
-from src.config import buffer_around_home
-from src.remove_home_points import remove_home_points
+from cat_movement_analysis.config import buffer_around_home
+from cat_movement_analysis.remove_home_points import remove_home_points
 
 
 def test_remove_home_points_intersection():

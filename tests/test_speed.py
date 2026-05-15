@@ -2,7 +2,7 @@ import pytest
 import geopandas as gpd
 import numpy as np
 from geopandas.testing import assert_geodataframe_equal
-from src.speed import calculate_timelag_steplength_speed
+from cat_movement_analysis.speed import calculate_timelag_steplength_speed
 
 
 def test_calculate_timelag_steplength_speed_should_adds_columns_when_input_valid(

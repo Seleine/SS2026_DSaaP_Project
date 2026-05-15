@@ -1,6 +1,6 @@
 import pytest
 import geopandas as gpd
-from src.static_not_static_plot import sample_plot_static_not_static
+from cat_movement_analysis.static_not_static_plot import sample_plot_static_not_static
 
 
 def test_sample_plot_static_not_static_raises_if_data_is_not_geodataframe():

@@ -1,7 +1,7 @@
 import geopandas as gpd
 import pandas as pd
 import pytest
-from src.calculate_phases_of_the_day import calculate_phases_of_the_day
+from cat_movement_analysis.calculate_phases_of_the_day import calculate_phases_of_the_day
 
 
 def fake_get_times(times):

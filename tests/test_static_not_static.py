@@ -1,6 +1,6 @@
 import pytest
 import geopandas as gpd
-from src.static_not_static import create_static_column
+from cat_movement_analysis.static_not_static import create_static_column
 
 
 def test_create_static_column_marks_all_not_static(sample_layer):

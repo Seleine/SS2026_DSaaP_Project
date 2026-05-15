@@ -2,7 +2,7 @@ import numpy as np
 import folium
 import pytest
 import geopandas as gpd
-from src.kde_plot import plot_kde
+from cat_movement_analysis.kde_plot import plot_kde
 
 
 def test_plot_kde_raises_if_data_is_not_geodataframe():
