@@ -87,6 +87,8 @@ To run tests/ linter/ fomater inside the container, use:
 docker compose run --rm tests # run tests
 docker compose run --rm lint
 docker compose run --rm format
+docker compose run --rm lint-fix
+docker compose run --rm format-fix
 docker compose down # stop container
 ```
 
