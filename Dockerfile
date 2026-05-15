@@ -14,7 +14,7 @@ COPY src/config.py .
 COPY src/ src/
 COPY data_tractive/ data_tractive/
 
-RUN pip install --no-cache-dir .
+RUN pip install --no-cache-dir .[dev]
 
 ENTRYPOINT ["python", "src/main.py"]
 CMD []
