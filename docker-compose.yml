@@ -20,3 +20,10 @@ services:
     image: cat-movement-analysis
     entrypoint: ruff
     command: format --check
+
+  format-fix:
+    image: cat-movement-analysis
+    entrypoint: ruff
+    command: format .
+    volumes:
+      - .:/app
