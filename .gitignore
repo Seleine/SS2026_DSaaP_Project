@@ -1,6 +1,6 @@
 .venv
 .idea
-src/home_coords.py
+src/cat-movement-analysis/home_coords.py
 .coverage
 plots/
 report/
