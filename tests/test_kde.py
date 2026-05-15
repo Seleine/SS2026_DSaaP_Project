@@ -9,7 +9,7 @@ def test_create_static_column_raises_if_data_is_not_geodataframe():
         calculate_kde_from_gps_points(data="not a geodataframe", variable_name="test")
 
 
-def test_create_static_column_raises_if_variable_name_not_str():
+def test_create_static_column_raises_if_variable_name_not_str(sample_gdf):
     with pytest.raises(TypeError):
         calculate_kde_from_gps_points(data=sample_gdf, variable_name=123)
 
