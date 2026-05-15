@@ -14,12 +14,12 @@ services:
   lint:
     image: cat-movement-analysis
     entrypoint: ruff
-    command: check .
+    command: check . --force-exclude
 
   format:
     image: cat-movement-analysis
     entrypoint: ruff
-    command: format --check
+    command: format . --check --force-exclude
 
   lint-fix:
     image: cat-movement-analysis
