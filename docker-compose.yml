@@ -5,3 +5,7 @@ services:
     image: cat-movement-analysis
     volumes:
       - ./plots:/app/plots
+
+  tests:
+    image: cat-movement-analysis
+    command: pytest
