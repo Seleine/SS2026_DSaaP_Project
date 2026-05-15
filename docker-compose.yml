@@ -11,3 +11,12 @@ services:
     entrypoint: pytest
     command: -v
 
+  lint:
+    image: cat-movement-analysis
+    entrypoint: ruff
+    command: check .
+
+  format:
+    image: cat-movement-analysis
+    entrypoint: ruff
+    command: format --check
