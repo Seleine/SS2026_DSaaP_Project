@@ -1,7 +1,6 @@
 import seaborn as sns
 import geopandas as gpd
 import os
-import webbrowser
 import matplotlib.pyplot as plt
 
 
@@ -53,5 +52,3 @@ def barplot_counts(data: gpd.GeoDataFrame, x_variable: str, title: str, plot_nam
     )
     ax.get_figure().savefig(output_path, bbox_inches="tight")
     plt.close()
-
-    webbrowser.open(f"file://{output_path}")
