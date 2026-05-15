@@ -50,7 +50,13 @@ If you want to contribute to the project but don't want to set up the developmen
 The Dockerfile is located in the root of the repository and can be used to build a Docker image with all dependencies installed.
 To build the Docker image, run the following command in the terminal:
 
+### Set up Docker and build image
+To build a new Docker container the Desktop App has to be downloaded from their website:
+https://www.docker.com/products/docker-desktop/
+The GitHub Account can be used to set up an account.
+After downloading and installing the Docker Desktop App, the following command can be used to build the Docker image:
 ```bash
+docker desktop start 
 docker build -t cat-movement-analysis .
 ```
 
@@ -71,11 +77,16 @@ To save and later access the .html output from outside the container enter:
 
 ```bash
 mkdir plots
-docker compose up # run container and save output in plots folder
-docker compose run --rm tests # test docker image / run tests in container
+docker compose up analysis # run analysis & save output in plots folder
 docker compose down # stop container
 ```
 
+To run tests inside the container, use:
+
+```bash
+docker compose run --rm tests # run tests
+docker compose down # stop container
+```
 
 ## License
 By contributing to this project, you agree that your contributions will be licensed under the MIT License that covers this project.
