@@ -1,3 +1,5 @@
+[![codecov](https://codecov.io/gh/<ORG>/<REPO>/branch/main/graph/badge.svg)](https://codecov.io/gh/<ORG>/<REPO>)
+
 # Investigating Cat Movement Patterns 
 
 ## Project goals
