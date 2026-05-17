@@ -1,6 +1,7 @@
-[![codecov](https://codecov.io/gh/<ORG>/<REPO>/branch/main/graph/badge.svg)](https://codecov.io/gh/<ORG>/<REPO>)
-
 # Investigating Cat Movement Patterns 
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/Seleine/SS2026_DSaaP_Project/blob/main/LICENSE)
+[![Python](https://img.shields.io/badge/python-3.13-blue)](https://www.python.org/)
+[![codecov](https://codecov.io/gh/Seleine/SS2026_DSaaP_Project/branch/main/graph/badge.svg)](https://codecov.io/gh/Seleine/SS2026_DSaaP_Project)
 
 ## Project goals
 This project analyses GPS tracking data from a [Tractive](https://tractive.com/) collar (.gpx from tractive), which is mostly worn by cats and dogs.
