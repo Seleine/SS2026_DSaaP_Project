@@ -6,6 +6,7 @@ import pandas as pd
 
 def calculate_phases_of_the_day(
     data: gpd.GeoDataFrame,
+    get_sun_times: callable = get_times,
 ) -> gpd.GeoDataFrame:
     """
     Assign a day phase label to each GPS point based on sun times.
@@ -18,6 +19,9 @@ def calculate_phases_of_the_day(
     data : gpd.GeoDataFrame
         GeoDataFrame in LV95 (EPSG:2056) with a timezone-aware
         datetime column named ``'time'``.
+    get_sun_times : callable, optional
+        Function used to retrieve sun times for a given date and location.
+        Defaults to ``get_times``. Override in tests to inject mock sun times.
 
     Returns
     -------
