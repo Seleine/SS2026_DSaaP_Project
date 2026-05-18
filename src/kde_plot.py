@@ -70,7 +70,7 @@ def get_data_extend(data_wgs: gpd.GeoDataFrame) -> list[list[float]]:
     return [[bounds[1], bounds[0]], [bounds[3], bounds[2]]]
 
 
-def plot_kde(data: gpd.GeoDataFrame, plot_name: str) -> folium.Map:
+def plot_kde(data: gpd.pd.DataFrame, plot_name: str) -> folium.Map:
     """
     Plot kernel density estimation (KDE) home ranges as an interactive leaflet map.
 
@@ -79,7 +79,7 @@ def plot_kde(data: gpd.GeoDataFrame, plot_name: str) -> folium.Map:
     default browser.
 
     Parameters:
-    data: gpd.GeoDataFrame: containing the KDE polygons. Must include:
+    data: gpd.pd.DataFrame: containing the KDE polygons. Must include:
             - geometry: Polygon or MultiPolygon geometries.
             - area_km2: Numeric column with the area_km2 of each polygon (km²).
             - Variable: Categorical column used to split layers.
