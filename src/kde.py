@@ -86,7 +86,6 @@ def _build_evaluation_grid_for_kde(
     x_range = x.max() - x.min()
     y_range = y.max() - y.min()
 
-    # xi and yi are 200 evenly spaced values (ticks) along the longitude and latitude in the area of the bounding box
     xi = np.linspace(x.min() - margin * x_range, x.max() + margin * x_range, grid_size)
     yi = np.linspace(y.min() - margin * y_range, y.max() + margin * y_range, grid_size)
 
@@ -112,9 +111,6 @@ def _build_meshgrid_for_kde(
     if not isinstance(xi, np.ndarray) or not isinstance(yi, np.ndarray):
         raise TypeError("Arguments xi and yi must be a np.ndarray")
 
-    # combine xi and yi to a 2D grid
-    # Xi repeats the x-values across each row, Yi repeats the y-values down each column
-    # So at any position [i, j], the pair (Xi[i,j], Yi[i,j]) gives you the exact coordinates of that grid cell.
     Xi, Yi = np.meshgrid(xi, yi)
 
     return Xi, Yi
@@ -140,8 +136,6 @@ def _evaluate_kde(kde: gaussian_kde, Xi: np.ndarray, Yi: np.ndarray) -> np.ndarr
     if not isinstance(kde, gaussian_kde):
         raise TypeError("Argument kde must be a gaussian_kde")
 
-    # 2D grid (Xi, Yi) is fed in to the kde function to get a density value at every grid cell.
-    # 2D array is flattened into a 1D array and stacked into a matrix with two rows
     # each column is one grid point as an (x, y) pair. -> this is the format gaussian_kde expects (dimensions, n_points)
     positions = np.vstack([Xi.ravel(), Yi.ravel()])
     # evaluate KDE at all positions, returns a flat array. reshape turns back into a matrix.
@@ -256,7 +250,7 @@ def _extract_contour_polygons(
 
     records = []
 
-    for pct in percentiles:  # [95, 75, 50, 25, 10]
+    for pct in percentiles:
         threshold_idx = np.searchsorted(
             cumsum, pct / 100.0
         )  # gets the index of the percentile in the cumsum array
@@ -320,6 +314,12 @@ def calculate_kde_from_gps_points(
                       - percent (int): the probability level
                       - geometry: polygon or multipolygon of the home range
                       - area_km2 (float): area of the home range in km2
+    Raises:
+        TypeError: If data is not a GeoDataFrame, variable_name is not a
+            str, percentiles is not a list[int], or grid_size is not an int.
+        ValueError: If data has fewer than 50 rows, percentiles is empty or
+            contains values outside the range [1, 100], or grid_size is less
+            than 10.
     """
     if not isinstance(data, gpd.GeoDataFrame):
         raise TypeError("Argument data must be a gpd.GeoDataFrame")
