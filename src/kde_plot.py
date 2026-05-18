@@ -89,11 +89,10 @@ def plot_kde(data: gpd.pd.DataFrame, plot_name: str) -> folium.Map:
     folium.Map: The constructed folium map object.
 
     Raises:
-    TypeError
-        If `data` is not a GeoDataFrame.
-    ValueError
-        If required columns ('geometry', 'area_km2', 'Variable') are missing,
-        or if the GeoDataFrame is empty.
+        TypeError: If data is not a GeoDataFrame, or plot_name is not a str.
+        ValueError: If data is missing required columns (geometry,
+            area_km2, or Variable), is empty, has a non-numeric or
+            NaN-containing area_km2 column, or has no CRS set.
     """
     if not isinstance(data, gpd.GeoDataFrame):
         raise TypeError(f"Expected a GeoDataFrame, got {type(data).__name__}.")
@@ -114,12 +113,12 @@ def plot_kde(data: gpd.pd.DataFrame, plot_name: str) -> folium.Map:
     if data.crs is None:
         raise ValueError("GeoDataFrame has no CRS set.")
 
-    # Change to EPSG:4326 for leaflet
+    # change to EPSG:4326 for leaflet
     data_wgs = data.copy()
     data_wgs.geometry = data_wgs.geometry.make_valid()
     data_wgs = data_wgs.to_crs(epsg=4326)
 
-    # stretch the colourmap to (YlOrRd_09) match your actual data range
+    # stretch the colourmap to (YlOrRd_09) match actual data range
     # largest area_km2 has the darkest colour and vice versa
     colourmap = cm.LinearColormap(
         colors=list(reversed(cm.linear.YlOrRd_09.colors)),
@@ -127,24 +126,22 @@ def plot_kde(data: gpd.pd.DataFrame, plot_name: str) -> folium.Map:
         vmax=data_wgs["area_km2"].max(),
     )
 
-    # Initialise folium map with default OSM tiles
     m = folium.Map()
 
-    # Split GeoDataFrame by Variable, collect FeatureGroups
+    # split GeoDataFrame by variable, collect FeatureGroups
     feature_groups = collect_feature_groups(data_wgs=data_wgs, colourmap=colourmap)
 
     # add each feature group to the map
     for fg in feature_groups:
         fg.add_to(m)
 
-    # GroupedLayerControl with exclusive_groups=True for radio-button behaviour
+    # GroupedLayerControl with exclusive_groups=True for radio-button
     GroupedLayerControl(
         groups={"Variables": feature_groups},
         exclusive_groups=True,
         collapsed=False,
     ).add_to(m)
 
-    # Fit map to data extent
     m.fit_bounds(get_data_extend(data_wgs=data_wgs))
 
     if not os.path.exists("./plots"):
