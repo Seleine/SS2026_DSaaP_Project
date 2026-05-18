@@ -28,16 +28,20 @@ def read_gps_data(file_path: Path, gpx_layer: str, time_zone: str) -> gpd.GeoDat
         - month_num  : integer month number (1–12)
         - Month      : ordered categorical month name (January–December)
         - geometry   : point geometries from the GPX files
+    Raises:
+        NotADirectoryError: If file_path is not an existing directory.
+        FileNotFoundError: If no .gpx files are found in file_path.
+        ValueError: If time_zone is not a valid tz database string, or
+            gpx_layer is not one of 'track_points', 'tracks',
+            'waypoints', or 'routes'.
+        ValueError: If fewer than 50 GPS points remain after cleaning.
     """
 
-    # check if directory exists
     if not os.path.isdir(file_path):
         raise NotADirectoryError(f"Directory not found: '{file_path}'")
-    # check if any .gpx files exist in the directory
     files = glob.glob(f"{file_path}/*.gpx")
     if not files:
         raise FileNotFoundError(f"No .gpx files found in: '{file_path}'")
-    # check if time zone is valid
     try:
         import zoneinfo
 
@@ -46,32 +50,24 @@ def read_gps_data(file_path: Path, gpx_layer: str, time_zone: str) -> gpd.GeoDat
         raise ValueError(
             f"Invalid time zone: '{time_zone}'. Use a valid tz database string, e.g. 'Europe/Zurich'."
         )
-    # check if gpx_layer is valid
     valid_layers = ["track_points", "tracks", "waypoints", "routes"]
     if gpx_layer not in valid_layers:
         raise ValueError(f"Invalid layer: '{gpx_layer}'. Choose from {valid_layers}.")
 
-    # list all .gpx files in the directory
     files = glob.glob(f"{file_path}/*.gpx")
 
-    # read all files and store in a list
     data_list = [gpd.read_file(f, layer=gpx_layer) for f in files]
 
-    # concatenate all GeoDataFrames into one
     merged_data = gpd.pd.concat(data_list, ignore_index=True)
 
     merged_data = merged_data[config.columns_of_choice]
 
-    # ensure correct data type and time zone for time column
     merged_data["time"] = pd.to_datetime(merged_data["time"]).dt.tz_convert(time_zone)
 
-    # remove duplicated times
     merged_data = merged_data.drop_duplicates(subset=["time"])
 
-    # extract month from date
     merged_data["Month"] = pd.to_datetime(merged_data["time"]).dt.month_name().str[:]
 
-    # ensure correct order of months
     month_order = [
         "January",
         "February",
@@ -91,10 +87,8 @@ def read_gps_data(file_path: Path, gpx_layer: str, time_zone: str) -> gpd.GeoDat
         merged_data["Month"], categories=month_order, ordered=True
     )
 
-    # ensure correct geometry column
     merged_data = merged_data.set_geometry("geometry")
 
-    # ensure correct CRS
     merged_data = merged_data.to_crs(config.CRS)
 
     if len(merged_data) < 50:
