@@ -5,7 +5,7 @@ import os
 import branca.colormap as cm
 
 
-def collect_feature_groups(
+def _collect_feature_groups(
     data_wgs: gpd.GeoDataFrame, colourmap: cm.LinearColormap
 ) -> list[folium.FeatureGroup]:
     """
@@ -53,7 +53,7 @@ def collect_feature_groups(
     return feature_groups
 
 
-def get_data_extend(data_wgs: gpd.GeoDataFrame) -> list[list[float]]:
+def _get_data_extend(data_wgs: gpd.GeoDataFrame) -> list[list[float]]:
     """
     Fit map to data extent.
 
@@ -72,30 +72,36 @@ def get_data_extend(data_wgs: gpd.GeoDataFrame) -> list[list[float]]:
 
 def plot_kde(data: gpd.pd.DataFrame, plot_name: str) -> folium.Map:
     """
-    Plot kernel density estimation (KDE) home ranges as an interactive leaflet map.
+    Plot kernel density estimation (KDE) home ranges as an interactive Leaflet map.
 
-    Polygons are grouped by the 'Variable' column and rendered as mutually exclusive radio-button layers, coloured
-    by area_km2 size. The resulting map is saved as an HTML file and opened in the
-    default browser.
+    Polygons are grouped by the ``'Variable'`` column and rendered as mutually
+    exclusive radio-button layers, coloured by ``area_km2`` size. The resulting
+    map is saved as an HTML file.
 
     Parameters
     ----------
-    data: gpd.pd.DataFrame: containing the KDE polygons. Must include:
-            - geometry: Polygon or MultiPolygon geometries.
-            - area_km2: Numeric column with the area_km2 of each polygon (km²).
-            - Variable: Categorical column used to split layers.
-    plot_name: string of plot name
+    data : gpd.GeoDataFrame
+        GeoDataFrame containing the KDE polygons. Must include:
+
+        - ``geometry``: Polygon or MultiPolygon geometries.
+        - ``area_km2`` (float): area of each polygon in km².
+        - ``Variable``: categorical column used to split layers.
+    plot_name : str
+        The name of the saved HTML file.
 
     Returns
     -------
-    folium.Map: The constructed folium map object.
+    folium.Map
+        The constructed folium map object.
 
     Raises
     ------
-        TypeError: If data is not a GeoDataFrame, or plot_name is not a str.
-        ValueError: If data is missing required columns (geometry,
-            area_km2, or Variable), is empty, has a non-numeric or
-            NaN-containing area_km2 column, or has no CRS set.
+    TypeError
+        If ``data`` is not a GeoDataFrame, or ``plot_name`` is not a str.
+    ValueError
+        If ``data`` is missing required columns (``geometry``, ``area_km2``, or
+        ``Variable``), is empty, has a non-numeric or NaN-containing ``area_km2``
+        column, or has no CRS set.
     """
     if not isinstance(data, gpd.GeoDataFrame):
         raise TypeError(f"Expected a GeoDataFrame, got {type(data).__name__}.")
@@ -132,7 +138,7 @@ def plot_kde(data: gpd.pd.DataFrame, plot_name: str) -> folium.Map:
     m = folium.Map()
 
     # split GeoDataFrame by variable, collect FeatureGroups
-    feature_groups = collect_feature_groups(data_wgs=data_wgs, colourmap=colourmap)
+    feature_groups = _collect_feature_groups(data_wgs=data_wgs, colourmap=colourmap)
 
     # add each feature group to the map
     for fg in feature_groups:
@@ -145,7 +151,7 @@ def plot_kde(data: gpd.pd.DataFrame, plot_name: str) -> folium.Map:
         collapsed=False,
     ).add_to(m)
 
-    m.fit_bounds(get_data_extend(data_wgs=data_wgs))
+    m.fit_bounds(_get_data_extend(data_wgs=data_wgs))
 
     if not os.path.exists("./plots"):
         os.mkdir("./plots")

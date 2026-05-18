@@ -9,9 +9,9 @@ def remove_home_points(
 
     Parameters
     ----------
-    data: gpd.GeoDataFrame
+    data : gpd.GeoDataFrame
         GeoDataFrame containing GPS tracking points.
-    home_buffer: gpd.GeoSeries
+    home_buffer : gpd.GeoSeries
         GeoSeries containing the home buffer polygon.
 
     Returns
@@ -21,10 +21,11 @@ def remove_home_points(
 
     Raises
     ------
-        TypeError: If data is not a GeoDataFrame, or home_buffer is not a
-            GeoSeries.
-        ValueError: If data or home_buffer is empty, their CRS do not
-            match, or either contains null geometries.
+    TypeError
+        If ``data`` is not a GeoDataFrame, or ``home_buffer`` is not a GeoSeries.
+    ValueError
+        If ``data`` or ``home_buffer`` is empty, their CRS do not match, or
+        either contains null geometries.
     """
     if not isinstance(data, gpd.GeoDataFrame):
         raise TypeError(

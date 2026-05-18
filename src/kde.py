@@ -321,32 +321,38 @@ def calculate_kde_from_gps_points(
     grid_size: int = 200,
 ) -> gpd.GeoDataFrame:
     """
-    Calculate Kernel Density Estimation from GPS Points.
+    Calculate Kernel Density Estimation from GPS points.
 
-    Parameter
-    ---------
-        data (GeoDataFrame): Input GeoDataFrame with point geometries
-                             in a projected metric CRS (e.g. EPSG:2056).
-        variable_name (str): Input name for variable.
-        percentiles (list[int]): Probability contour levels to extract.
-                                 Defaults to [95, 75, 50, 25, 10].
-        grid_size (int): Resolution of the KDE evaluation grid.
-                         Higher values produce smoother contours but are slower.
-                         Defaults to 200.
+    Parameters
+    ----------
+    data : gpd.GeoDataFrame
+        Input GeoDataFrame with point geometries in a projected metric CRS
+        (e.g. EPSG:2056).
+    variable_name : str
+        Name for the output variable.
+    percentiles : list[int], optional
+        Probability contour levels to extract. Defaults to ``[95, 75, 50, 25, 10]``.
+    grid_size : int, optional
+        Resolution of the KDE evaluation grid. Higher values produce smoother
+        contours but are slower. Defaults to ``200``.
 
     Returns
     -------
-        GeoDataFrame: One row per percentile with columns:
-                      - percent (int): the probability level
-                      - geometry: polygon or multipolygon of the home range
-                      - area_km2 (float): area of the home range in km2
+    gpd.GeoDataFrame
+        One row per percentile with columns:
+
+        - ``percent`` (int): the probability level.
+        - ``geometry``: polygon or multipolygon of the home range.
+        - ``area_km2`` (float): area of the home range in km².
+
     Raises
     ------
-        TypeError: If data is not a GeoDataFrame, variable_name is not a
-            str, percentiles is not a list[int], or grid_size is not an int.
-        ValueError: If data has fewer than 50 rows, percentiles is empty or
-            contains values outside the range [1, 100], or grid_size is less
-            than 10.
+    TypeError
+        If ``data`` is not a GeoDataFrame, ``variable_name`` is not a str,
+        ``percentiles`` is not a list[int], or ``grid_size`` is not an int.
+    ValueError
+        If ``data`` has fewer than 50 rows, ``percentiles`` is empty or contains
+        values outside the range [1, 100], or ``grid_size`` is less than 10.
     """
     if not isinstance(data, gpd.GeoDataFrame):
         raise TypeError("Argument data must be a gpd.GeoDataFrame")

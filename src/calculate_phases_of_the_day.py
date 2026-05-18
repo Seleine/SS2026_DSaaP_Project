@@ -17,21 +17,22 @@ def calculate_phases_of_the_day(
     ----------
     data : gpd.GeoDataFrame
         GeoDataFrame in LV95 (EPSG:2056) with a timezone-aware
-        datetime column named 'time'.
+        datetime column named ``'time'``.
 
     Returns
     -------
-    gpd.GeoDataFrame,
+    gpd.GeoDataFrame
         The input GeoDataFrame in LV95 (EPSG:2056) with an additional
-        'dayphase' column containing one of:
-        'Dawn', 'Daytime', 'Dusk', or 'Nighttime'.
+        ``'dayphase'`` column containing one of:
+        ``'Dawn'``, ``'Daytime'``, ``'Dusk'``, or ``'Nighttime'``.
 
     Raises
     ------
-    TypeError: If data is not a GeoDataFrame.
-    ValueError: If data is empty, lacks a 'time' column, has a
-        'time' column that is not timezone-aware, or contains null
-        geometries.
+    TypeError
+        If ``data`` is not a GeoDataFrame.
+    ValueError
+        If ``data`` is empty, lacks a ``'time'`` column, has a ``'time'``
+        column that is not timezone-aware, or contains null geometries.
     """
     if not isinstance(data, gpd.GeoDataFrame):
         raise TypeError(f"Expected a GeoDataFrame, got {type(data).__name__}.")

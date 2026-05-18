@@ -6,25 +6,25 @@ import matplotlib.pyplot as plt
 
 def barplot_counts(data: gpd.GeoDataFrame, x_variable: str, title: str, plot_name: str):
     """
-    Creates and saves a count bar plot for a given variable in a GeoDataFrame,
-    then opens it in the default web browser.
+    Creates and saves a count bar plot for a given variable in a GeoDataFrame.
 
     Parameters
     ----------
-    data: gpd.GeoDataFrame
+    data : gpd.GeoDataFrame
         The input GeoDataFrame containing the data to plot.
-    x_variable: str
+    x_variable : str
         The column name in `data` to count and display on the x-axis.
-    title: str
+    title : str
         The title to display on the plot.
-    plot_name: string of plot name
+    plot_name : str
+        The name of the saved plot file.
 
     Raises
     ------
-    ValueError
-        If `x_variable` is not a column in `data`.
     TypeError
-        If `data` is not a GeoDataFrame.
+        If ``data`` is not a GeoDataFrame.
+    ValueError
+        If ``x_variable`` is not a column in ``data``.
     """
     if not isinstance(data, gpd.GeoDataFrame):
         raise TypeError(f"Expected a GeoDataFrame, got {type(data).__name__}.")

@@ -134,27 +134,30 @@ def sample_plot_static_not_static(
 
     Parameters
     ----------
-    data: gpd.GeoDataFrame
-        GeoDataFrame containing GPS tracking points with required columns:
-        'time', 'geometry', 'geom_buffer', 'static', 'track_seg_point_id'.
-    start_date: str
-        Start of the time range (inclusive), e.g. '2024-04-01 00:00:00'.
-    end_date: str
-        End of the time range (exclusive), e.g. '2024-04-01 18:00:00'.
-    time_zone: str
-        Timezone string, e.g. 'Europe/Zurich'. Defaults to the project timezone.
+    data : gpd.GeoDataFrame
+        GeoDataFrame containing GPS tracking points. Must include columns:
+        ``'time'``, ``'geometry'``, ``'geom_buffer'``, ``'static'``, and
+        ``'track_seg_point_id'``.
+    start_date : str
+        Start of the time range (inclusive), e.g. ``'2024-04-01 00:00:00'``.
+    end_date : str
+        End of the time range (exclusive), e.g. ``'2024-04-01 18:00:00'``.
+    time_zone : str
+        Timezone string, e.g. ``'Europe/Zurich'``. Defaults to the project
+        timezone.
 
     Returns
     -------
     None
-        Saves 'sample_plot_static.html' to the working directory and opens it.
+        Saves ``'sample_plot_static.html'`` to the working directory and opens
+        it in the default browser.
 
     Raises
     ------
     TypeError
-        If `data` is not a GeoDataFrame.
+        If ``data`` is not a GeoDataFrame.
     ValueError
-        If `data` is empty or required columns are missing.
+        If ``data`` is empty or required columns are missing.
     """
     if not isinstance(data, gpd.GeoDataFrame):
         raise TypeError(f"Expected a GeoDataFrame, got {type(data).__name__}.")

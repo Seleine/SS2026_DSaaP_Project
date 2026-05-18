@@ -13,32 +13,35 @@ def read_gps_data(file_path: Path, gpx_layer: str, time_zone: str) -> gpd.GeoDat
     Parameters
     ----------
     file_path : Path
-        Path to the directory containing the .gpx files.
+        Path to the directory containing the ``.gpx`` files.
     gpx_layer : str
-        GPX layer to read, e.g. "track_points" or "tracks".
+        GPX layer to read. Must be one of ``'track_points'``, ``'tracks'``,
+        ``'waypoints'``, or ``'routes'``.
     time_zone : str
-        Target time zone for the time column, e.g. "Europe/Zurich".
+        Target time zone for the ``'time'`` column (e.g. ``'Europe/Zurich'``).
         Must be a valid tz database string.
 
     Returns
     -------
     gpd.GeoDataFrame
         A merged GeoDataFrame containing all track points with:
-        - time       : timezone-aware datetime column
-        - month_num  : integer month number (1–12)
-        - Month      : ordered categorical month name (January–December)
-        - geometry   : point geometries from the GPX files
+
+        - ``time`` (datetime): timezone-aware datetime column.
+        - ``month_num`` (int): month number (1–12).
+        - ``Month`` (str): ordered categorical month name (January–December).
+        - ``geometry``: point geometries from the GPX files.
 
     Raises
     ------
-        NotADirectoryError: If file_path is not an existing directory.
-        FileNotFoundError: If no .gpx files are found in file_path.
-        ValueError: If time_zone is not a valid tz database string, or
-            gpx_layer is not one of 'track_points', 'tracks',
-            'waypoints', or 'routes'.
-        ValueError: If fewer than 50 GPS points remain after cleaning.
+    NotADirectoryError
+        If ``file_path`` is not an existing directory.
+    FileNotFoundError
+        If no ``.gpx`` files are found in ``file_path``.
+    ValueError
+        If ``time_zone`` is not a valid tz database string, ``gpx_layer`` is not
+        one of ``'track_points'``, ``'tracks'``, ``'waypoints'``, or
+        ``'routes'``, or fewer than 50 GPS points remain after cleaning.
     """
-
     if not os.path.isdir(file_path):
         raise NotADirectoryError(f"Directory not found: '{file_path}'")
     files = glob.glob(f"{file_path}/*.gpx")

@@ -43,24 +43,27 @@ def create_static_column(data: gpd.GeoDataFrame, buffer: int) -> gpd.GeoDataFram
 
     Parameters
     ----------
-    data: gpd.GeoDataFrame
+    data : gpd.GeoDataFrame
         GeoDataFrame with a valid geometry column representing GPS tracking points.
-    buffer: int
-        Buffer distance in the units of the GeoDataFrame's CRS (e.g. metres for EPSG:2056).
+    buffer : int
+        Buffer distance in the units of the GeoDataFrame's CRS (e.g. metres for
+        EPSG:2056).
 
     Returns
     -------
     gpd.GeoDataFrame
         The input GeoDataFrame with two additional columns:
-        - 'geom_buffer': buffer geometries around each point.
-        - 'static': classification of each point as 'Static' or 'Not Static'.
+
+        - ``'geom_buffer'``: buffer geometries around each point.
+        - ``'static'``: classification of each point as ``'Static'`` or
+          ``'Not Static'``.
 
     Raises
     ------
     TypeError
-        If `data` is not a GeoDataFrame or `buffer` is not an integer.
+        If ``data`` is not a GeoDataFrame or ``buffer`` is not an integer.
     ValueError
-        If `data` is empty or has no valid geometry column.
+        If ``data`` is empty or has no valid geometry column.
     """
     if not isinstance(data, gpd.GeoDataFrame):
         raise TypeError(f"Expected a GeoDataFrame, got {type(data).__name__}.")

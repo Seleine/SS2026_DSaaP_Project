@@ -57,21 +57,27 @@ def calculate_timelag_steplength_speed(
     data: gpd.GeoDataFrame, datetime_col: str, geometry_col: str
 ) -> gpd.GeoDataFrame:
     """
-    Calculate the time lag, steplength, and speed between two GPS points.
+    Calculate the time lag, step length, and speed between consecutive GPS points.
 
-    Parameter
-    ---------
-        data: Input GeoDataFrame.
-        datetime_col: Input datetime column of type string.
-        geometry_col: Input GeoSeries of geometry of type string.
+    Parameters
+    ----------
+    data : gpd.GeoDataFrame
+        The input GeoDataFrame containing GPS points.
+    datetime_col : str
+        The name of the column containing datetime values.
+    geometry_col : str
+        The name of the column containing point geometries.
 
     Returns
     -------
-        GeoDataFrame: New GeoDataFrame with added columns.
+    gpd.GeoDataFrame
+        A new GeoDataFrame with added columns for time lag, step length, and speed.
 
     Raises
     ------
-        TypeError: If either argument is the wrong data type.
+    TypeError
+        If ``data`` is not a GeoDataFrame, or ``datetime_col`` or ``geometry_col``
+        are not strings.
     """
     if not isinstance(data, gpd.GeoDataFrame):
         raise TypeError("Argument data must be gpd.GeoDataFrame")
