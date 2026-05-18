@@ -6,8 +6,7 @@ import pandas as pd
 
 def calculate_phases_of_the_day(
     data: gpd.GeoDataFrame,
-    get_sun_times: callable = get_times,
-) -> gpd.GeoDataFrame:  #  injected dependency
+) -> gpd.GeoDataFrame:
     """
     Assign a day phase label to each GPS point based on sun times.
 
@@ -26,24 +25,26 @@ def calculate_phases_of_the_day(
         The input GeoDataFrame in LV95 (EPSG:2056) with an additional
         'dayphase' column containing one of:
         'Dawn', 'Daytime', 'Dusk', or 'Nighttime'.
+
+    Raises
+    -------
+    TypeError: If data is not a GeoDataFrame.
+    ValueError: If data is empty, lacks a 'time' column, has a
+        'time' column that is not timezone-aware, or contains null
+        geometries.
     """
-    # check if input is a GeoDataFrame
     if not isinstance(data, gpd.GeoDataFrame):
         raise TypeError(f"Expected a GeoDataFrame, got {type(data).__name__}.")
-    # check if GeoDataFrame is empty
     if data.empty:
         raise ValueError("GeoDataFrame is empty.")
-    # check if 'time' column exists
     if "time" not in data.columns:
         raise ValueError("GeoDataFrame must contain a 'time' column.")
-    # check if 'time' column is timezone-aware
     if not pd.api.types.is_datetime64tz_dtype(data["time"]):
         raise ValueError("The 'time' column must be timezone-aware.")
-    # check if geometry column exists and is valid
     if data.geometry.isnull().any():
         raise ValueError("GeoDataFrame contains null geometries.")
 
-    data_wgs = data.to_crs(4326)  # WGS84 needed for library suncalc
+    data_wgs = data.to_crs(4326)
 
     sun_times = gpd.pd.DataFrame(
         get_times(
