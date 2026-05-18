@@ -12,29 +12,27 @@ def collect_feature_groups(
     Takes the reprojected GeoDataFrame and the scaled colourmap, returns
     a list of folium FeatureGroup objects (one per variable).
 
-    Parameters:
-    data: gpd.GeoDataFrame: containing the KDE polygons. Must include:
+    Parameters
+    ----------
+    data_wgs: gpd.GeoDataFrame: containing the KDE polygons. Must include:
             - geometry: Polygon or MultiPolygon geometries.
             - area_km2: Numeric column with the area_km2 of each polygon (km²).
             - Variable: Categorical column used to split layers.
+    colourmap: colourmap for plotting
 
-    Returns:
+    Returns
+    -------
     folium.FeatureGroup: The constructed folium feature groups.
     """
 
     feature_groups = []
-    # variable_name = e.g. "variable1"
-    # subset = the two rows where Variable == "variable1" (poly1 and multi)
     for variable_name, subset in data_wgs.groupby("Variable"):
         fg = folium.FeatureGroup(name=variable_name, show=False)
 
         folium.GeoJson(
             subset,
             style_function=lambda feature: {
-                # feature is a GeoJSON-style Python dict that folium passes in, and feature["properties"]["area_km2"]
-                # reads that polygon's area_km2 value from it
                 "fillColor": colourmap(feature["properties"]["area_km2"]),
-                # the colourmap then converts that number into a hex colour string like "#fd8d3c"
                 "fillOpacity": 0.4,
                 "color": "darkgrey",
                 "weight": 1,
@@ -59,11 +57,13 @@ def get_data_extend(data_wgs: gpd.GeoDataFrame) -> list[list[float]]:
     """
     Fit map to data extent.
 
-    Parameters:
-    data: gpd.GeoDataFrame: containing the KDE polygons.
+    Parameters
+    ----------
+    data_wgs: gpd.GeoDataFrame: containing the KDE polygons.
 
-    Returns:
-    list[list[float]]: Bounding box as [[min_lat, min_lon], [max_lat, max_lon]].
+    Returns
+    -------
+        list[list[float]]: Bounding box as [[min_lat, min_lon], [max_lat, max_lon]].
     """
 
     bounds = data_wgs.total_bounds
@@ -78,17 +78,20 @@ def plot_kde(data: gpd.pd.DataFrame, plot_name: str) -> folium.Map:
     by area_km2 size. The resulting map is saved as an HTML file and opened in the
     default browser.
 
-    Parameters:
+    Parameters
+    ----------
     data: gpd.pd.DataFrame: containing the KDE polygons. Must include:
             - geometry: Polygon or MultiPolygon geometries.
             - area_km2: Numeric column with the area_km2 of each polygon (km²).
             - Variable: Categorical column used to split layers.
     plot_name: string of plot name
 
-    Returns:
+    Returns
+    -------
     folium.Map: The constructed folium map object.
 
-    Raises:
+    Raises
+    ------
         TypeError: If data is not a GeoDataFrame, or plot_name is not a str.
         ValueError: If data is missing required columns (geometry,
             area_km2, or Variable), is empty, has a non-numeric or

@@ -28,7 +28,9 @@ def read_gps_data(file_path: Path, gpx_layer: str, time_zone: str) -> gpd.GeoDat
         - month_num  : integer month number (1–12)
         - Month      : ordered categorical month name (January–December)
         - geometry   : point geometries from the GPX files
-    Raises:
+
+    Raises
+    ------
         NotADirectoryError: If file_path is not an existing directory.
         FileNotFoundError: If no .gpx files are found in file_path.
         ValueError: If time_zone is not a valid tz database string, or

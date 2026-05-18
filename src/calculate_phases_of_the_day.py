@@ -27,7 +27,7 @@ def calculate_phases_of_the_day(
         'Dawn', 'Daytime', 'Dusk', or 'Nighttime'.
 
     Raises
-    -------
+    ------
     TypeError: If data is not a GeoDataFrame.
     ValueError: If data is empty, lacks a 'time' column, has a
         'time' column that is not timezone-aware, or contains null

@@ -5,14 +5,17 @@ def _calculate_timediff_seconds(later: gpd.GeoSeries, now: gpd.pd.Series) -> flo
     """
     Calculate the difference between two datetime objects in seconds.
 
-    Args:
+    Parameter
+    ---------
         later (datetime): The later Series.
         now (datetime): The earlier Series.
 
-    Returns:
+    Returns
+    -------
         float: The difference in seconds. Negative if 'later' is before 'now'.
 
-    Raises:
+    Raises
+    ------
         TypeError: If either argument is not a Series.
     """
     if not isinstance(later, gpd.pd.Series) or not isinstance(now, gpd.pd.Series):
@@ -29,14 +32,17 @@ def _calculate_distance_by_element(
     """
     Calculate the distance by element.
 
-    Args:
+    Parameter
+    ---------
         geom_a: The first Point.
         geom_b: The second Point.
 
-    Returns:
-        float:
+    Returns
+    -------
+        float: Distance by element
 
-    Raises:
+    Raises
+    ------
         TypeError: If either argument is not a GeoPandas Series object.
     """
     if not isinstance(geom_a, gpd.GeoSeries) or not isinstance(geom_b, gpd.GeoSeries):
@@ -53,15 +59,18 @@ def calculate_timelag_steplength_speed(
     """
     Calculate the time lag, steplength, and speed between two GPS points.
 
-    Args:
+    Parameter
+    ---------
         data: Input GeoDataFrame.
         datetime_col: Input datetime column of type string.
         geometry_col: Input GeoSeries of geometry of type string.
 
-    Returns:
+    Returns
+    -------
         GeoDataFrame: New GeoDataFrame with added columns.
 
-    Raises:
+    Raises
+    ------
         TypeError: If either argument is the wrong data type.
     """
     if not isinstance(data, gpd.GeoDataFrame):

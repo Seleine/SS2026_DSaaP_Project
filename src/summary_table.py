@@ -9,15 +9,18 @@ def summary_table(
     """
     Create a summary table of the data to get an overview of the data quality.
 
-    Args:
+    Parameters
+    ----------
         data: Input GeoDataFrame.
         datetime_col: Input datetime column of type datetime.
         table_name: string for the name of the table for saving
 
-    Returns:
+    Returns
+    -------
         DataFrame: Pandas DataFrame of the table.
 
-    Raises:
+    Raises
+    ------
         TypeError: If either argument is the wrong data type.
     """
     if not isinstance(data, gpd.GeoDataFrame):

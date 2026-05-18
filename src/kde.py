@@ -11,14 +11,17 @@ def _extract_coords(data: gpd.GeoDataFrame) -> tuple[np.ndarray, np.ndarray]:
     """
     Extract x and y coordinates from a GeoDataFrame's geometry column.
 
-    Args:
+    Parameter
+    ---------
         data (GeoDataFrame): Input GeoDataFrame with point geometries
                              in a projected metric CRS (e.g. EPSG:2056).
 
-    Returns:
+    Returns
+    -------
         tuple[np.ndarray, np.ndarray]: A tuple of (x, y) coordinate arrays.
 
-    Raises:
+    Raises
+    ------
         TypeError: If argument is the wrong data type.
     """
     if not isinstance(data, gpd.GeoDataFrame):
@@ -38,14 +41,17 @@ def _fit_kde(x: np.ndarray, y: np.ndarray) -> gaussian_kde:
     """
     Fit KDE on coordinates of GPS data points.
 
-    Args:
+    Parameter
+    ---------
         x (np.ndarray): Input for x coordinates.
         y (np.ndarray): Input for y coordinates.
 
-    Returns:
+    Returns
+    -------
         gaussian_kde: A fitted KDE object using Scott's rule for bandwidth selection.
 
-    Raises:
+    Raises
+    ------
         TypeError: If argument is the wrong data type.
     """
     if not isinstance(x, np.ndarray) or not isinstance(y, np.ndarray):
@@ -66,15 +72,18 @@ def _build_evaluation_grid_for_kde(
     """
     Build evaluation grid for kde.
 
-    Args:
+    Parameter
+    ---------
         x (np.ndarray): Input for x coordinates.
         y (np.ndarray): Input for y coordinates.
         grid_size (int): Resolution of the KDE evaluation grid. Defaults to 200.
 
-    Returns:
+    Returns
+    -------
         tuple[np.ndarray, np.ndarray]: A tuple of (xi, yi) evenly spaced grid tick.
 
-    Raises:
+    Raises
+    ------
         TypeError: If argument is the wrong data type.
     """
     if not isinstance(x, np.ndarray) or not isinstance(y, np.ndarray):
@@ -98,14 +107,17 @@ def _build_meshgrid_for_kde(
     """
     Build meshgrid for kde.
 
-    Args:
+    Parameter
+    ---------
         xi (np.ndarray): Evenly spaced grid ticks along the x axis.
         yi (np.ndarray): Evenly spaced grid ticks along the y axis.
 
-    Returns:
+    Returns
+    -------
         tuple[np.ndarray, np.ndarray]: A tuple (Xi, Yi) of coordinate matrices from coordinate vectors.
 
-    Raises:
+    Raises
+    ------
         TypeError: If argument is the wrong data type.
     """
     if not isinstance(xi, np.ndarray) or not isinstance(yi, np.ndarray):
@@ -120,15 +132,18 @@ def _evaluate_kde(kde: gaussian_kde, Xi: np.ndarray, Yi: np.ndarray) -> np.ndarr
     """
     Evaluate the kde.
 
-    Args:
+    Parameter
+    ---------
         kde (gaussian_kde): A fitted KDE object using Scott's rule for bandwidth selection.
         Xi (np.ndarray): Coordinate matrix for x axis.
         Yi (np.ndarray): Coordinate matrix for y axis.
 
-    Returns:
+    Returns
+    -------
         np.ndarray: A 2D density surface evaluated at each grid cell.
 
-    Raises:
+    Raises
+    ------
         TypeError: If argument is the wrong data type.
     """
     if not isinstance(Xi, np.ndarray) or not isinstance(Yi, np.ndarray):
@@ -148,13 +163,16 @@ def _normalise_kde(Zi: np.ndarray) -> np.ndarray:
     """
     Normalise to a probability surface.
 
-    Args:
+    Parameter
+    ---------
         Zi (np.ndarray): A 2D density surface evaluated at each grid cell.
 
-    Returns:
+    Returns
+    -------
         np.ndarray: A normalised 2D probability surface.
 
-    Raises:
+    Raises
+    ------
         TypeError: If argument is the wrong data type.
     """
     if not isinstance(Zi, np.ndarray):
@@ -171,15 +189,18 @@ def _contour_to_polygons(
     """
     Convert contour paths to shapely polygons.
 
-    Args:
+    Parameter
+    ---------
         contour (np.ndarray): Represent contour lines with shape (n, 2) -> representing points.
         xi (np.ndarray): Evenly spaced grid ticks along the x axis.
         yi (np.ndarray): Evenly spaced grid ticks along the y axis.
 
-    Returns:
+    Returns
+    -------
         Polygon | None: A Shapely Polygon if valid, otherwise None.
 
-    Raises:
+    Raises
+    ------
         TypeError: If argument is the wrong data type.
     """
     if (
@@ -219,17 +240,20 @@ def _extract_contour_polygons(
     """
     Extract contour polygons for each percentile.
 
-    Args:
+    Parameter
+    ---------
         xi (np.ndarray): Evenly spaced grid ticks along the x axis.
         yi (np.ndarray): Evenly spaced grid ticks along the y axis.
         Zi_norm (np.ndarray): A normalised 2D probability surface.
         crs (pyproj.CRS): coordinate reference system of the data.
         percentiles (list[int]): Probability contour levels to extract. Defaults to [95, 75, 50, 25, 10].
 
-    Returns:
+    Returns
+    -------
         gpd.GeoDataFrame: One row per percentile with columns percent (int), geometry (Polygon | MultiPolygon), and area_km2 (float).
 
-    Raises:
+    Raises
+    ------
         TypeError: If argument is the wrong data type.
     """
     if (
@@ -299,7 +323,8 @@ def calculate_kde_from_gps_points(
     """
     Calculate Kernel Density Estimation from GPS Points.
 
-    Args:
+    Parameter
+    ---------
         data (GeoDataFrame): Input GeoDataFrame with point geometries
                              in a projected metric CRS (e.g. EPSG:2056).
         variable_name (str): Input name for variable.
@@ -309,12 +334,14 @@ def calculate_kde_from_gps_points(
                          Higher values produce smoother contours but are slower.
                          Defaults to 200.
 
-    Returns:
+    Returns
+    -------
         GeoDataFrame: One row per percentile with columns:
                       - percent (int): the probability level
                       - geometry: polygon or multipolygon of the home range
                       - area_km2 (float): area of the home range in km2
-    Raises:
+    Raises
+    ------
         TypeError: If data is not a GeoDataFrame, variable_name is not a
             str, percentiles is not a list[int], or grid_size is not an int.
         ValueError: If data has fewer than 50 rows, percentiles is empty or

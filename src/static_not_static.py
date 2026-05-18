@@ -18,6 +18,11 @@ def _buffers_intersect(data: gpd.GeoDataFrame, idx_a: int, idx_b: int) -> bool:
     -------
     bool
         True if the two buffers intersect, False otherwise.
+        
+    Raises
+    ------
+        ValueError: If data does not contain a 'geom_buffer' column.
+        IndexError: If idx_a or idx_b are out of bounds for data.
     """
     if "geom_buffer" not in data.columns:
         raise ValueError("GeoDataFrame must contain a 'geom_buffer' column.")

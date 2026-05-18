@@ -19,7 +19,8 @@ def remove_home_points(
     gpd.GeoDataFrame
         The input GeoDataFrame with all points inside the home buffer removed.
 
-    Raises:
+    Raises
+    ------
         TypeError: If data is not a GeoDataFrame, or home_buffer is not a
             GeoSeries.
         ValueError: If data or home_buffer is empty, their CRS do not
