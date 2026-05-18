@@ -3,20 +3,24 @@ import geopandas as gpd
 
 def _calculate_timediff_seconds(later: gpd.GeoSeries, now: gpd.pd.Series) -> float:
     """
-    Calculate the difference between two datetime objects in seconds.
+    Calculate the difference between two datetime Series in seconds.
 
-    Parameter
-    ---------
-        later (datetime): The later Series.
-        now (datetime): The earlier Series.
+    Parameters
+    ----------
+    later : pd.Series
+        The later datetime Series.
+    now : pd.Series
+        The earlier datetime Series.
 
     Returns
     -------
-        float: The difference in seconds. Negative if 'later' is before 'now'.
+    pd.Series
+        The difference in seconds. Negative if ``later`` is before ``now``.
 
     Raises
     ------
-        TypeError: If either argument is not a Series.
+    TypeError
+        If ``later`` or ``now`` are not datetime Series.
     """
     if not isinstance(later, gpd.pd.Series) or not isinstance(now, gpd.pd.Series):
         raise TypeError("Both arguments must be gpd.GeoSeries")
@@ -30,20 +34,24 @@ def _calculate_distance_by_element(
     geom_a: gpd.GeoSeries, geom_b: gpd.GeoSeries
 ) -> float:
     """
-    Calculate the distance by element.
+    Calculate the element-wise distance between two geometry Series.
 
-    Parameter
-    ---------
-        geom_a: The first Point.
-        geom_b: The second Point.
+    Parameters
+    ----------
+    geom_a : gpd.GeoSeries
+        The first Series of point geometries.
+    geom_b : gpd.GeoSeries
+        The second Series of point geometries.
 
     Returns
     -------
-        float: Distance by element
+    pd.Series
+        The element-wise distance between corresponding points.
 
     Raises
     ------
-        TypeError: If either argument is not a GeoPandas Series object.
+    TypeError
+        If ``geom_a`` or ``geom_b`` are not GeoSeries objects.
     """
     if not isinstance(geom_a, gpd.GeoSeries) or not isinstance(geom_b, gpd.GeoSeries):
         raise TypeError("Both arguments must be gpd.GeoSeries")

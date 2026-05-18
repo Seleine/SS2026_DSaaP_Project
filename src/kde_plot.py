@@ -9,20 +9,23 @@ def _collect_feature_groups(
     data_wgs: gpd.GeoDataFrame, colourmap: cm.LinearColormap
 ) -> list[folium.FeatureGroup]:
     """
-    Takes the reprojected GeoDataFrame and the scaled colourmap, returns
-    a list of folium FeatureGroup objects (one per variable).
+    Build a list of Folium FeatureGroup objects, one per variable.
 
     Parameters
     ----------
-    data_wgs: gpd.GeoDataFrame: containing the KDE polygons. Must include:
-            - geometry: Polygon or MultiPolygon geometries.
-            - area_km2: Numeric column with the area_km2 of each polygon (km²).
-            - Variable: Categorical column used to split layers.
-    colourmap: colourmap for plotting
+    data_wgs : gpd.GeoDataFrame
+        GeoDataFrame containing the KDE polygons. Must include:
+
+        - ``geometry``: Polygon or MultiPolygon geometries.
+        - ``area_km2`` (float): area of each polygon in km².
+        - ``Variable``: categorical column used to split layers.
+    colourmap : branca.colormap.ColorMap
+        Colourmap used to colour polygons by ``area_km2``.
 
     Returns
     -------
-    folium.FeatureGroup: The constructed folium feature groups.
+    list[folium.FeatureGroup]
+        One FeatureGroup per unique value in the ``'Variable'`` column.
     """
 
     feature_groups = []
@@ -59,11 +62,13 @@ def _get_data_extend(data_wgs: gpd.GeoDataFrame) -> list[list[float]]:
 
     Parameters
     ----------
-    data_wgs: gpd.GeoDataFrame: containing the KDE polygons.
+    data_wgs : gpd.GeoDataFrame
+        GeoDataFrame containing the KDE polygons.
 
     Returns
     -------
-        list[list[float]]: Bounding box as [[min_lat, min_lon], [max_lat, max_lon]].
+    list[list[float]]
+        Bounding box as ``[[min_lat, min_lon], [max_lat, max_lon]]``.
     """
 
     bounds = data_wgs.total_bounds

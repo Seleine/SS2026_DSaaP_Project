@@ -11,18 +11,21 @@ def _extract_coords(data: gpd.GeoDataFrame) -> tuple[np.ndarray, np.ndarray]:
     """
     Extract x and y coordinates from a GeoDataFrame's geometry column.
 
-    Parameter
-    ---------
-        data (GeoDataFrame): Input GeoDataFrame with point geometries
-                             in a projected metric CRS (e.g. EPSG:2056).
+    Parameters
+    ----------
+    data : gpd.GeoDataFrame
+        Input GeoDataFrame with point geometries in a projected metric CRS
+        (e.g. EPSG:2056).
 
     Returns
     -------
-        tuple[np.ndarray, np.ndarray]: A tuple of (x, y) coordinate arrays.
+    tuple[np.ndarray, np.ndarray]
+        A tuple of (x, y) coordinate arrays.
 
     Raises
     ------
-        TypeError: If argument is the wrong data type.
+    TypeError
+        If ``data`` is not a GeoDataFrame.
     """
     if not isinstance(data, gpd.GeoDataFrame):
         raise TypeError("Argument data must be a gpd.GeoDataFrame")
@@ -41,18 +44,22 @@ def _fit_kde(x: np.ndarray, y: np.ndarray) -> gaussian_kde:
     """
     Fit KDE on coordinates of GPS data points.
 
-    Parameter
-    ---------
-        x (np.ndarray): Input for x coordinates.
-        y (np.ndarray): Input for y coordinates.
+    Parameters
+    ----------
+    x : np.ndarray
+        Array of x coordinates.
+    y : np.ndarray
+        Array of y coordinates.
 
     Returns
     -------
-        gaussian_kde: A fitted KDE object using Scott's rule for bandwidth selection.
+    scipy.stats.gaussian_kde
+        A fitted KDE object using Scott's rule for bandwidth selection.
 
     Raises
     ------
-        TypeError: If argument is the wrong data type.
+    TypeError
+        If ``x`` or ``y`` are not NumPy arrays.
     """
     if not isinstance(x, np.ndarray) or not isinstance(y, np.ndarray):
         raise TypeError("Arguments x and y must be a np.ndarray")
@@ -70,21 +77,26 @@ def _build_evaluation_grid_for_kde(
     x: np.ndarray, y: np.ndarray, grid_size: int = 200
 ) -> tuple[np.ndarray, np.ndarray]:
     """
-    Build evaluation grid for kde.
+    Build an evaluation grid for KDE.
 
-    Parameter
-    ---------
-        x (np.ndarray): Input for x coordinates.
-        y (np.ndarray): Input for y coordinates.
-        grid_size (int): Resolution of the KDE evaluation grid. Defaults to 200.
+    Parameters
+    ----------
+    x : np.ndarray
+        Array of x coordinates.
+    y : np.ndarray
+        Array of y coordinates.
+    grid_size : int, optional
+        Resolution of the KDE evaluation grid. Defaults to ``200``.
 
     Returns
     -------
-        tuple[np.ndarray, np.ndarray]: A tuple of (xi, yi) evenly spaced grid tick.
+    tuple[np.ndarray, np.ndarray]
+        A tuple of (xi, yi) evenly spaced grid ticks.
 
     Raises
     ------
-        TypeError: If argument is the wrong data type.
+    TypeError
+        If ``x`` or ``y`` are not NumPy arrays, or ``grid_size`` is not an int.
     """
     if not isinstance(x, np.ndarray) or not isinstance(y, np.ndarray):
         raise TypeError("Arguments x and y must be a np.ndarray")
@@ -105,20 +117,24 @@ def _build_meshgrid_for_kde(
     xi: np.ndarray, yi: np.ndarray
 ) -> tuple[np.ndarray, np.ndarray]:
     """
-    Build meshgrid for kde.
+    Build a meshgrid for KDE.
 
-    Parameter
-    ---------
-        xi (np.ndarray): Evenly spaced grid ticks along the x axis.
-        yi (np.ndarray): Evenly spaced grid ticks along the y axis.
+    Parameters
+    ----------
+    xi : np.ndarray
+        Evenly spaced grid ticks along the x axis.
+    yi : np.ndarray
+        Evenly spaced grid ticks along the y axis.
 
     Returns
     -------
-        tuple[np.ndarray, np.ndarray]: A tuple (Xi, Yi) of coordinate matrices from coordinate vectors.
+    tuple[np.ndarray, np.ndarray]
+        A tuple (Xi, Yi) of coordinate matrices from coordinate vectors.
 
     Raises
     ------
-        TypeError: If argument is the wrong data type.
+    TypeError
+        If ``xi`` or ``yi`` are not NumPy arrays.
     """
     if not isinstance(xi, np.ndarray) or not isinstance(yi, np.ndarray):
         raise TypeError("Arguments xi and yi must be a np.ndarray")
@@ -130,21 +146,26 @@ def _build_meshgrid_for_kde(
 
 def _evaluate_kde(kde: gaussian_kde, Xi: np.ndarray, Yi: np.ndarray) -> np.ndarray:
     """
-    Evaluate the kde.
+    Evaluate the KDE over a meshgrid.
 
-    Parameter
-    ---------
-        kde (gaussian_kde): A fitted KDE object using Scott's rule for bandwidth selection.
-        Xi (np.ndarray): Coordinate matrix for x axis.
-        Yi (np.ndarray): Coordinate matrix for y axis.
+    Parameters
+    ----------
+    kde : scipy.stats.gaussian_kde
+        A fitted KDE object using Scott's rule for bandwidth selection.
+    Xi : np.ndarray
+        Coordinate matrix for the x axis.
+    Yi : np.ndarray
+        Coordinate matrix for the y axis.
 
     Returns
     -------
-        np.ndarray: A 2D density surface evaluated at each grid cell.
+    np.ndarray
+        A 2D density surface evaluated at each grid cell.
 
     Raises
     ------
-        TypeError: If argument is the wrong data type.
+    TypeError
+        If ``kde`` is not a gaussian_kde, or ``Xi`` or ``Yi`` are not NumPy arrays.
     """
     if not isinstance(Xi, np.ndarray) or not isinstance(Yi, np.ndarray):
         raise TypeError("Arguments Xi and Yi must be a np.ndarray")
@@ -161,19 +182,22 @@ def _evaluate_kde(kde: gaussian_kde, Xi: np.ndarray, Yi: np.ndarray) -> np.ndarr
 
 def _normalise_kde(Zi: np.ndarray) -> np.ndarray:
     """
-    Normalise to a probability surface.
+    Normalise a density surface to a probability surface.
 
-    Parameter
-    ---------
-        Zi (np.ndarray): A 2D density surface evaluated at each grid cell.
+    Parameters
+    ----------
+    Zi : np.ndarray
+        A 2D density surface evaluated at each grid cell.
 
     Returns
     -------
-        np.ndarray: A normalised 2D probability surface.
+    np.ndarray
+        A normalised 2D probability surface.
 
     Raises
     ------
-        TypeError: If argument is the wrong data type.
+    TypeError
+        If ``Zi`` is not a NumPy array.
     """
     if not isinstance(Zi, np.ndarray):
         raise TypeError("Argument Zi must be a np.ndarray")
@@ -187,21 +211,26 @@ def _contour_to_polygons(
     contour: np.ndarray, xi: np.ndarray, yi: np.ndarray
 ) -> Polygon | None:
     """
-    Convert contour paths to shapely polygons.
+    Convert contour paths to Shapely polygons.
 
-    Parameter
-    ---------
-        contour (np.ndarray): Represent contour lines with shape (n, 2) -> representing points.
-        xi (np.ndarray): Evenly spaced grid ticks along the x axis.
-        yi (np.ndarray): Evenly spaced grid ticks along the y axis.
+    Parameters
+    ----------
+    contour : np.ndarray
+        Contour line with shape (n, 2) representing n points.
+    xi : np.ndarray
+        Evenly spaced grid ticks along the x axis.
+    yi : np.ndarray
+        Evenly spaced grid ticks along the y axis.
 
     Returns
     -------
-        Polygon | None: A Shapely Polygon if valid, otherwise None.
+    shapely.geometry.Polygon or None
+        A Shapely Polygon if valid, otherwise ``None``.
 
     Raises
     ------
-        TypeError: If argument is the wrong data type.
+    TypeError
+        If ``contour``, ``xi``, or ``yi`` are not NumPy arrays.
     """
     if (
         not isinstance(xi, np.ndarray)
@@ -240,21 +269,33 @@ def _extract_contour_polygons(
     """
     Extract contour polygons for each percentile.
 
-    Parameter
-    ---------
-        xi (np.ndarray): Evenly spaced grid ticks along the x axis.
-        yi (np.ndarray): Evenly spaced grid ticks along the y axis.
-        Zi_norm (np.ndarray): A normalised 2D probability surface.
-        crs (pyproj.CRS): coordinate reference system of the data.
-        percentiles (list[int]): Probability contour levels to extract. Defaults to [95, 75, 50, 25, 10].
+    Parameters
+    ----------
+    xi : np.ndarray
+        Evenly spaced grid ticks along the x axis.
+    yi : np.ndarray
+        Evenly spaced grid ticks along the y axis.
+    Zi_norm : np.ndarray
+        A normalised 2D probability surface.
+    crs : pyproj.CRS
+        Coordinate reference system of the data.
+    percentiles : list[int], optional
+        Probability contour levels to extract. Defaults to ``[95, 75, 50, 25, 10]``.
 
     Returns
     -------
-        gpd.GeoDataFrame: One row per percentile with columns percent (int), geometry (Polygon | MultiPolygon), and area_km2 (float).
+    gpd.GeoDataFrame
+        One row per percentile with columns:
+
+        - ``percent`` (int): the probability level.
+        - ``geometry``: Polygon or MultiPolygon of the home range.
+        - ``area_km2`` (float): area of the home range in km².
 
     Raises
     ------
-        TypeError: If argument is the wrong data type.
+    TypeError
+        If ``xi``, ``yi``, or ``Zi_norm`` are not NumPy arrays, ``crs`` is not a
+        pyproj.CRS, or ``percentiles`` is not a list[int].
     """
     if (
         not isinstance(xi, np.ndarray)
@@ -293,9 +334,6 @@ def _extract_contour_polygons(
         ]
 
         if polygons:
-            # returns the union of multiple geometries
-            # handles the case where the density surface has multiple disconnected regions
-            # would return a MultiPolygon
             merged = union_all(polygons)
             records.append(
                 {
@@ -306,9 +344,6 @@ def _extract_contour_polygons(
                 }
             )
 
-    ########################
-    # Return as GeoDataFrame
-    ########################
     ranges = gpd.GeoDataFrame(records, crs=crs)
 
     return ranges

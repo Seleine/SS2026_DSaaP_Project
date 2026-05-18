@@ -7,11 +7,11 @@ def _buffers_intersect(data: gpd.GeoDataFrame, idx_a: int, idx_b: int) -> bool:
 
     Parameters
     ----------
-    data: gpd.GeoDataFrame
-        GeoDataFrame containing a 'geom_buffer' column with buffer geometries.
-    idx_a: int
+    data : gpd.GeoDataFrame
+        GeoDataFrame containing a ``'geom_buffer'`` column with buffer geometries.
+    idx_a : int
         Positional index of the first buffer.
-    idx_b: int
+    idx_b : int
         Positional index of the second buffer.
 
     Returns
@@ -21,8 +21,10 @@ def _buffers_intersect(data: gpd.GeoDataFrame, idx_a: int, idx_b: int) -> bool:
 
     Raises
     ------
-        ValueError: If data does not contain a 'geom_buffer' column.
-        IndexError: If idx_a or idx_b are out of bounds for data.
+    ValueError
+        If ``data`` does not contain a ``'geom_buffer'`` column.
+    IndexError
+        If ``idx_a`` or ``idx_b`` are out of bounds for ``data``.
     """
     if "geom_buffer" not in data.columns:
         raise ValueError("GeoDataFrame must contain a 'geom_buffer' column.")
