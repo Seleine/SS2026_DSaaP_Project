@@ -25,7 +25,6 @@ services:
     volumes:
       - .:/app
 
-
   lint-fix:
     image: cat-movement-analysis
     entrypoint: ruff
