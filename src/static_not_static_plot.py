@@ -2,7 +2,6 @@ import geopandas as gpd
 import pandas as pd
 from shapely.geometry import LineString
 import config
-import webbrowser
 from utils.output import get_output_dir
 
 
