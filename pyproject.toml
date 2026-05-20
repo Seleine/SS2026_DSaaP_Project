@@ -29,6 +29,5 @@ dev = [
 [tool.ruff]
 exclude = ["build"]
 
-
 [tool.ruff.format]
 exclude = ["build"]
