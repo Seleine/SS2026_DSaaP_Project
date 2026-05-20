@@ -5,11 +5,16 @@ services:
     image: cat-movement-analysis
     volumes:
       - ./plots:/app/plots
+      - ./data_tractive:/app/data_tractive
+      - .:/app
 
   tests:
     image: cat-movement-analysis
     entrypoint: pytest
     command: -v
+    volumes:
+      - .:/app
+
 
   lint:
     image: cat-movement-analysis
