@@ -9,7 +9,6 @@ COPY pyproject.toml .
 COPY src/config.py .
 COPY src/ src/
 COPY tests/ tests/
-COPY data_tractive/ data_tractive/
 
 #RUN pip install --no-cache-dir .[dev]
 RUN pip install --no-cache-dir . \
