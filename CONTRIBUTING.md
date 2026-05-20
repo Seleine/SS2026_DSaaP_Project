@@ -54,9 +54,18 @@ To build the Docker image, run the following command in the terminal:
 To build a new Docker container the Desktop App has to be downloaded from their website:
 https://www.docker.com/products/docker-desktop/
 The GitHub Account can be used to set up an account.
-After downloading and installing the Docker Desktop App, the following command can be used to build the Docker image:
+Before creating the container, Docker Desktop has to be started manually via the application.
+To verify Docker is running enter:
 ```bash
-docker desktop start 
+docker --version
+docker info
+´´´
+
+After downloading and installing the Docker Desktop App, the following command can be used to build the Docker image:
+* Do not forget to copy paste the '.' otherwise the path is not set correctly and there will be an error!
+Also, make sure to run the command from the project root.
+
+```bash
 docker build -t cat-movement-analysis .
 ```
 
