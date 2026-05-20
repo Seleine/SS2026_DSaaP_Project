@@ -181,5 +181,3 @@ def sample_plot_static_not_static(
 
     output_html = plots_dir / "sample_plot_static.html"
     m.save(output_html)
-
-    webbrowser.open(f"file://{output_html.resolve()}")
