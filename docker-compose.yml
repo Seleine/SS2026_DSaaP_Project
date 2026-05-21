@@ -1,0 +1,45 @@
+version: "3.9"
+
+services:
+  analysis:
+    image: cat-movement-analysis
+    volumes:
+      - ./plots:/app/plots
+      - ./data_tractive:/app/data_tractive
+      - .:/app
+
+  tests:
+    image: cat-movement-analysis
+    entrypoint: pytest
+    command: -v
+    volumes:
+      - .:/app
+
+
+  lint:
+    image: cat-movement-analysis
+    entrypoint: ruff
+    command: check . --force-exclude
+    volumes:
+      - .:/app
+
+  format:
+    image: cat-movement-analysis
+    entrypoint: ruff
+    command: format . --check --force-exclude
+    volumes:
+      - .:/app
+
+  lint-fix:
+    image: cat-movement-analysis
+    entrypoint: ruff
+    command: check . --fix --force-exclude
+    volumes:
+      - .:/app
+
+  format-fix:
+    image: cat-movement-analysis
+    entrypoint: ruff
+    command: format . --force-exclude
+    volumes:
+      - .:/app

@@ -56,7 +56,7 @@ def test_sample_plot_static_not_static_raises_if_data_is_empty():
 def test_sample_plot_static_not_static_saves_and_opens(
     sample_layer_with_static, tmp_path, monkeypatch
 ):
-    monkeypatch.chdir(tmp_path)  # redirect file writes to temp dir
+    monkeypatch.setenv("OUTPUT_DIR", str(tmp_path / "plots"))
     monkeypatch.setattr("webbrowser.open", lambda url: None)
 
     sample_plot_static_not_static(
@@ -66,4 +66,6 @@ def test_sample_plot_static_not_static_saves_and_opens(
         time_zone="Europe/Zurich",
     )
 
-    assert (tmp_path / "plots" / "sample_plot_static.html").exists()
+    assert (tmp_path / "plots" / "sample_plot_static.html").exists(), (
+        "HTML output was not created"
+    )

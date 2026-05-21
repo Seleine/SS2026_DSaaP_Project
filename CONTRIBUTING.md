@@ -44,5 +44,62 @@ See the README for full installation and setup instructions.
 - Fill in the PR description with a summary of changes and any related issue numbers.
 - A project maintainer will review your PR and may request changes before merging.
 
+
+## Docker
+If you want to contribute to the project but don't want to set up the development environment locally, you can use Docker.
+The Dockerfile is located in the root of the repository and can be used to build a Docker image with all dependencies installed.
+To build the Docker image, run the following command in the terminal:
+
+### Set up Docker and build image
+To build a new Docker container the Desktop App has to be downloaded from their website:
+https://www.docker.com/products/docker-desktop/
+The GitHub Account can be used to set up an account.
+Before creating the container, Docker Desktop has to be started manually via the application.
+To verify Docker is running enter:
+```bash
+docker --version
+docker info
+´´´
+
+After downloading and installing the Docker Desktop App, the following command can be used to build the Docker image:
+* Do not forget to copy paste the '.' otherwise the path is not set correctly and there will be an error!
+Also, make sure to run the command from the project root.
+
+```bash
+docker build -t cat-movement-analysis .
+```
+
+Once the image is built, you can run a container with the following command:
+
+```bash
+docker run --rm cat-movement-analysis
+```
+
+To enter the container and work on the project files, run:
+
+```bash
+docker run --rm -it --entrypoint /bin/bash cat-movement-analysis # enter container
+exit # exit container
+```
+
+To save and later access the .html output from outside the container enter:
+
+```bash
+mkdir plots
+docker compose up analysis # run analysis & save output in plots folder
+docker compose down # stop container
+```
+
+To run tests/ linter/ formater inside the container, use:
+
+```bash
+docker compose run --rm tests # run tests
+docker compose run --rm lint
+docker compose run --rm format
+docker compose run --rm lint-fix
+docker compose run --rm format-fix
+docker compose down # stop container
+```
+
 ## License
 By contributing to this project, you agree that your contributions will be licensed under the MIT License that covers this project.

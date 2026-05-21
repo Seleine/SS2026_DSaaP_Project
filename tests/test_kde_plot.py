@@ -45,10 +45,10 @@ def test_plot_kde_raises_if_crs_is_none(sample_kde_result):
 
 
 def test_plot_kde_saves_html_and_returns_map(sample_kde_result, tmp_path, monkeypatch):
-    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("OUTPUT_DIR", str(tmp_path / "plots"))
     monkeypatch.setattr("webbrowser.open", lambda url: None)
 
     result = plot_kde(data=sample_kde_result, plot_name="test")
 
-    assert (tmp_path / "plots" / "test.html").exists()
-    assert isinstance(result, folium.Map)
+    assert (tmp_path / "plots" / "test.html").exists(), "HTML output was not created"
+    assert isinstance(result, folium.Map), "plot_kde did not return a folium.Map"
