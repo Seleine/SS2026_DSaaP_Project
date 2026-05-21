@@ -1,4 +1,7 @@
 # Investigating Cat Movement Patterns 
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](https://github.com/Seleine/SS2026_DSaaP_Project/blob/main/LICENSE)
+[![Python](https://img.shields.io/badge/python-3.13-blue)](https://www.python.org/)
+[![codecov](https://codecov.io/gh/Seleine/SS2026_DSaaP_Project/branch/main/graph/badge.svg)](https://codecov.io/gh/Seleine/SS2026_DSaaP_Project)
 
 ## Project goals
 This project analyses GPS tracking data from a [Tractive](https://tractive.com/) collar (.gpx from tractive), which is mostly worn by cats and dogs.
@@ -7,17 +10,23 @@ Movement is classified using GPS positional accuracy buffers, where points falli
 
 For both segmentations a home range is estimated using Kernel Density Estimation (KDE), producing utilisation distribution contours at the 95%, 75%, 50%, 25%, and 10% levels. These contours show the areas the animal uses most intensively, from its full roaming range down to its core activity zone. 
 
-The main outputs consist of two interactive HTML maps, one visualising home range broken down by day phase, and the other comparing active versus resting periods. Open street map is used as base layer.
+The main output consist of an HTML report, visualising the data quality tables, plots and maps and two interactive maps; one visualising home range broken down by day phase, and the other comparing active versus resting periods. 
+Open street map is used as base layer.
 
 ## Repository Structure
 
 ```
 data_tractive/      input datasets from tractive
 src/                analysis scripts
-plots/              output figures
 tests/              test files
 .github/workflows   folder containing GitHub actions
 ```
+
+When running the code, three more folders are generated: quality_control, plots, and report.
+Depending on from where the user runs the script, the two folders are generated in the root or in the src folder.
+The quality_control folder contains the barplots, showing the number of data points per phase.
+The plots folder contains the interactive plots.
+The report folder contains the final report.
 
 ## Install UV
 Installation instructions can be found in the official uv documentation:
@@ -58,10 +67,11 @@ point = Point(["Easting", "Northing"])
 
 home_coords = gpd.GeoSeries([point], crs=config.CRS)
 ```
-The correct projected CRS can be found on [EPSG.io](https://epsg.io/).
 
 ### Config File
 The file `config.py` contains several variables which must be provided by the user.
+The correct projected CRS can be found on [EPSG.io](https://epsg.io/).
+The SRID code for Switzerland is 2056.
 
 | **Variable Name**   | **Example Value**                          | **Description**                                                                                                                                                                                |
 |---------------------|--------------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -80,10 +90,13 @@ The file `config.py` contains several variables which must be provided by the us
 Open terminal in your IDE and run:
 
 ```bash
+uv sync
+
 uv run src/main.py
 ```
 
-The resulting plots will appear in the folder «plots».
+The resulting tables and plots will appear in the folders «quality_control» and «plots».
+The resulting report will appear in the folder «report».
 
 ## Data
 

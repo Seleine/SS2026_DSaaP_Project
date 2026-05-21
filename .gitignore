@@ -3,5 +3,9 @@
 src/home_coords.py
 .coverage
 plots/
+report/
 o.prof
 o.folded
+**/__pycache__/ # Python bytecode
+quality_control/
+coverage.xml

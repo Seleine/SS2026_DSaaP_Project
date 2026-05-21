@@ -1,62 +1,49 @@
-import shapely
 import pytest
 import geopandas as gpd
-from datetime import datetime
-import numpy as np
 from src.summary_table import summary_table
-from io import StringIO
-import sys
+import os
 
 
-def test_summary_table():
-    # Arrange
-    captured = StringIO()
-    sys.stdout = captured
+def test_summary_table(sample_layer, capsys):
+    summary_table(data=sample_layer, datetime_col="time", table_name="table")
 
-    sample_geom = gpd.GeoSeries(
-        [
-            shapely.Point(2684961.287, 1246073.33),
-            shapely.Point(2684806.122, 1246003.058),
-            shapely.Point(2684828.182, 1245955.671),
-        ],
-        crs=2056,
-    )
-    sample_data = {
-        "track_seg_point_id": [1, 2, 3],
-        "time": [
-            datetime.fromisoformat("2024-04-01 09:49:55+02:00"),
-            datetime.fromisoformat("2024-04-01 09:59:38+02:00"),
-            datetime.fromisoformat("2024-04-01 10:09:37+02:00"),
-        ],
-        "Month": ["April", "April", "April"],
-        "dayphase": ["Daytime", "Daytime", "Daytime"],
-        "geometry": sample_geom,
-        "timelag": [580.0, 600.0, 620.0],
-        "steplength": [170.336, 52.270, np.nan],
-        "speed_ms": [0.292, 0.087, np.nan],
-        "speed_kmh": [1.051, 0.313, np.nan],
-    }
-    sample_layer = gpd.GeoDataFrame(sample_data)
+    captured = capsys.readouterr()
 
-    # Act
-    summary_table(data=sample_layer, datetime_col="time")
-
-    sys.stdout = sys.__stdout__
-    output = captured.getvalue()
+    output = captured.out
 
     # Assert
-    assert "Month" in output
-    assert "Median Interval (min)" in output
-    assert "10.0" in output
-    assert len(output) > 0
+    assert output == ""
 
 
 def test_summary_table_raises_if_data_is_not_geodataframe():
     with pytest.raises(TypeError):
-        summary_table(data="not a geodataframe", datetime_col="time")
+        summary_table(
+            data="not a geodataframe", datetime_col="time", table_name="table"
+        )
 
 
-def test_summary_table_raises_if_buffer_is_not_int():
+def test_summary_table_raises_if_datetime_col_not_str():
     gdf = gpd.GeoDataFrame()
     with pytest.raises(TypeError):
-        summary_table(data=gdf, datetime_col=123)
+        summary_table(data=gdf, datetime_col=123, table_name="table")
+
+
+def test_summary_table_raises_if_table_name_not_str():
+    gdf = gpd.GeoDataFrame()
+    with pytest.raises(TypeError):
+        summary_table(data=gdf, datetime_col="time", table_name=123)
+
+
+def test_summary_table_generates_html(sample_layer):
+    path = "./quality_control/table.html"
+
+    if os.path.exists(path):
+        os.remove(path)
+
+    summary_table(
+        data=sample_layer,
+        datetime_col="time",
+        table_name="table",
+    )
+
+    assert os.path.exists(path)

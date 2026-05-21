@@ -15,6 +15,7 @@ from kde import calculate_kde_from_gps_points
 from kde_plot import plot_kde
 from bar_plot_counts import barplot_counts
 from pathlib import Path
+from generate_report import generate_report
 
 
 def main():
@@ -58,21 +59,25 @@ def main():
         data=data, datetime_col="time", geometry_col="geometry"
     )
 
-    # all rows containing a speed value > 48 km/h will be removed
-    data = data[data["speed_kmh"] < 48]
+    # all rows containing a speed value > value in config file km/h will be removed
+    data = data[data["speed_kmh"] < config.max_speed_kmh]
 
     ########################################
     # Summary Table
     ########################################
 
-    summary_table(data=data, datetime_col="time")
+    summary_table(
+        data=data,
+        datetime_col="time",
+        table_name="summary_table_before_outlier_deletion",
+    )
 
     ########################################
     # Calculate Time Lag and Check Speed Value 2
     ########################################
 
-    # Data points with a time lag < 9 minutes will be removed. This faciliates the calculation of static and non-static phases.
-    data = data[data["timelag"] >= 540]
+    # Data points with a time lag < value in config file minutes will be removed. This facilitates the calculation of static and non-static phases.
+    data = data[data["timelag"] >= config.min_timelag_s]
 
     # generate new unique id
     data["track_seg_point_id"] = range(1, len(data) + 1)
@@ -86,7 +91,11 @@ def main():
     # Summary Table 2
     ########################################
 
-    summary_table(data=data, datetime_col="time")
+    summary_table(
+        data=data,
+        datetime_col="time",
+        table_name="summary_table_after_outlier_deletion",
+    )
 
     ########################################
     # KDE Plot Phases of the Day
@@ -113,6 +122,7 @@ def main():
     )
 
     kde_dayphases = gpd.pd.concat([kde_night, kde_day, kde_dusk, kde_dawn])
+    kde_dayphases = gpd.GeoDataFrame(kde_dayphases)
 
     plot_kde(data=kde_dayphases, plot_name="kde_dayphases")
 
@@ -149,5 +159,61 @@ def main():
     plot_kde(data=kde_movement, plot_name="kde_movement")
 
 
+def build_report():
+    STRUCTURE = [
+        {
+            "title": "Quality Control",
+            "level": 2,
+            "content": [],
+            "text": "This section summarises the quality control steps applied to the raw GPS data.",
+            "subsections": [
+                {
+                    "title": "Summary Table",
+                    "level": 3,
+                    "text": "The first table gives an overview of the data points before outlier deletion. Outliers are data points which result in a speed value larger than the set value in the config file. Furthermore, data points which have a time lag smaller than the specified value in the config file are deleted, which increases data quality. Therefore, in the second table there should be no data points with a time lag smaller than the set value.",
+                    "content": [
+                        "quality_control/summary_table_before_outlier_deletion.html",
+                        "quality_control/summary_table_after_outlier_deletion.html",
+                    ],
+                },
+                {
+                    "title": "Number of Data Points",
+                    "level": 3,
+                    "text": "These two plots show the number of data points after outlier deletion, either separated by day or movement phase.",
+                    "content": [
+                        "quality_control/barplot_count_data_points_dayphases.png",
+                        "quality_control/barplot_count_data_points_movement.png",
+                    ],
+                },
+                {
+                    "title": "Sample Plot for Movement Phases",
+                    "level": 3,
+                    "text": "This interactive map shows the idea behind the separation of moving and static phases. Is a point within the set buffer of the previous or following point, it is determined as static.",
+                    "content": [
+                        "plots/sample_plot_static.html",
+                    ],
+                },
+            ],
+        },
+        {
+            "title": "Products",
+            "level": 2,
+            "text": "The interactive maps show the KDE for the different phases.",
+            "content": [
+                "plots/kde_dayphases.html",
+                "plots/kde_movement.html",
+            ],
+        },
+    ]
+
+    generate_report(
+        structure=STRUCTURE,
+        output_path="report.html",
+        base_dir=".",
+        report_title="Report",
+    )
+
+
 if __name__ == "__main__":
     main()
+    build_report()
