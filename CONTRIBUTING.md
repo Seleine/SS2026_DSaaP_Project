@@ -44,7 +44,24 @@ See the README for full installation and setup instructions.
 - Fill in the PR description with a summary of changes and any related issue numbers.
 - A project maintainer will review your PR and may request changes before merging.
 
+## Flame Graph
 
+A flame graph is a visualisation of profiling data that shows which functions consume the most execution time. It is useful for identifying performance bottlenecks in the pipeline. The width of each bar represents the proportion of total execution time spent in that function.
+
+# Generate the profiling output
+uv run python -m cProfile -o o.prof src/profiling_example.py
+
+# Convert profiler output to folded format
+uv run flameprof o.prof --format log > o.folded
+
+# Generate the flame graph as an interactive HTML file
+uv run pyinstrument -o flamegraph.html --html src/profiling_example.py
+
+# Open the flame graph in your browser
+start flamegraph.html
+
+Note: o.prof and o.folded are intermediate files and are listed in .gitignore. 
+Only flamegraph.html needs to be kept if you wish to share the output.
 ## Docker
 If you want to contribute to the project but don't want to set up the development environment locally, you can use Docker.
 The Dockerfile is located in the root of the repository and can be used to build a Docker image with all dependencies installed.
