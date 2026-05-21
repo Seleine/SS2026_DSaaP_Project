@@ -90,7 +90,7 @@ docker compose up analysis # run analysis & save output in plots folder
 docker compose down # stop container
 ```
 
-To run tests/ linter/ fomater inside the container, use:
+To run tests/ linter/ formater inside the container, use:
 
 ```bash
 docker compose run --rm tests # run tests
