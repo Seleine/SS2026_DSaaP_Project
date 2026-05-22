@@ -5,7 +5,7 @@ import os
 
 def summary_table(
     data: gpd.GeoDataFrame, datetime_col: str, table_name: str
-) -> pd.DataFrame:
+) -> None:
     """
     Create a summary table of the data to get an overview of data quality.
 
@@ -20,8 +20,8 @@ def summary_table(
 
     Returns
     -------
-    pd.DataFrame
-        A DataFrame summarising the data quality.
+    None
+        Saves html to the working directory.
 
     Raises
     ------
@@ -92,5 +92,3 @@ def summary_table(
         .hide(axis="index")
         .to_html(output_path)
     )
-
-    return table
