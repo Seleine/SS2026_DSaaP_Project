@@ -4,7 +4,7 @@ import os
 import matplotlib.pyplot as plt
 
 
-def barplot_counts(data: gpd.GeoDataFrame, x_variable: str, title: str, plot_name: str):
+def barplot_counts(data: gpd.GeoDataFrame, x_variable: str, title: str, plot_name: str) -> None:
     """
     Creates and saves a count bar plot for a given variable in a GeoDataFrame.
 
@@ -18,6 +18,11 @@ def barplot_counts(data: gpd.GeoDataFrame, x_variable: str, title: str, plot_nam
         The title to display on the plot.
     plot_name : str
         The name of the saved plot file.
+
+    Returns
+    -------
+    None
+        Saves the png to the working directory.
 
     Raises
     ------
