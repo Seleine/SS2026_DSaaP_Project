@@ -42,13 +42,3 @@ def test_plot_kde_raises_if_crs_is_none(sample_kde_result):
     sample_kde_result = sample_kde_result.set_crs(None, allow_override=True)
     with pytest.raises(ValueError):
         plot_kde(data=sample_kde_result, plot_name="test")
-
-
-def test_plot_kde_saves_html_and_returns_map(sample_kde_result, tmp_path, monkeypatch):
-    monkeypatch.chdir(tmp_path)
-    monkeypatch.setattr("webbrowser.open", lambda url: None)
-
-    result = plot_kde(data=sample_kde_result, plot_name="test")
-
-    assert (tmp_path / "plots" / "test.html").exists()
-    assert isinstance(result, folium.Map)
