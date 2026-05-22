@@ -150,8 +150,7 @@ def sample_plot_static_not_static(
     Returns
     -------
     None
-        Saves ``'sample_plot_static.html'`` to the working directory and opens
-        it in the default browser.
+        Saves ``'sample_plot_static.html'`` to the working directory.
 
     Raises
     ------
