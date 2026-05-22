@@ -3,9 +3,7 @@ import pandas as pd
 import os
 
 
-def summary_table(
-    data: gpd.GeoDataFrame, datetime_col: str, table_name: str
-) -> None:
+def summary_table(data: gpd.GeoDataFrame, datetime_col: str, table_name: str) -> None:
     """
     Create a summary table of the data to get an overview of data quality.
 
