@@ -12,9 +12,7 @@ def test_summary_table(sample_layer, capsys):
     output = captured.out
 
     # Assert
-    assert (
-        output == ""
-    )
+    assert output == ""
 
 
 def test_summary_table_raises_if_data_is_not_geodataframe():

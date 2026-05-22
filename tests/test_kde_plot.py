@@ -1,5 +1,4 @@
 import numpy as np
-import folium
 import pytest
 import geopandas as gpd
 from src.kde_plot import plot_kde
