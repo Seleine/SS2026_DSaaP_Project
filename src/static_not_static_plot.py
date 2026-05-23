@@ -2,7 +2,7 @@ import geopandas as gpd
 import pandas as pd
 from shapely.geometry import LineString
 import config
-import os
+from utils.output import get_output_dir
 
 
 def _filter_by_time(
@@ -179,8 +179,7 @@ def sample_plot_static_not_static(
     data_sample_plot = _filter_by_time(data, start_date, end_date, time_zone)
     m = _build_static_map(data_sample_plot)
 
-    if not os.path.exists("./plots"):
-        os.mkdir("./plots")
+    plots_dir = get_output_dir()
 
-    output_html = os.path.abspath("./plots/sample_plot_static.html")
+    output_html = plots_dir / "sample_plot_static.html"
     m.save(output_html)
