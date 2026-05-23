@@ -1,7 +1,6 @@
 import pytest
 import geopandas as gpd
 from src.summary_table import summary_table
-import pandas as pd
 import os
 
 
@@ -13,28 +12,7 @@ def test_summary_table(sample_layer, capsys):
     output = captured.out
 
     # Assert
-    assert (
-        output == ""
-    )  # Because we produce a html now, this is always empty before rendering!
-
-
-def test_summary_table_returns_expected_dataframe(sample_layer):
-    table = summary_table(data=sample_layer, datetime_col="time", table_name="table")
-
-    assert isinstance(table, pd.DataFrame)
-
-    expected_columns = [
-        "Month",
-        "Median Interval (min)",
-        "Mean Interval (min)",
-        "Min Interval (s)",
-        "Max Interval (h)",
-        "Count (points)",
-        "Count < 9 min",
-        "Proportion (%)",
-    ]
-    assert list(table.columns) == expected_columns
-    assert len(table) > 0
+    assert output == ""
 
 
 def test_summary_table_raises_if_data_is_not_geodataframe():

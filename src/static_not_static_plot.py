@@ -13,14 +13,14 @@ def _filter_by_time(
 
     Parameters
     ----------
-    data: gpd.GeoDataFrame
-        GeoDataFrame containing a 'time' column with timezone-aware timestamps.
-    start_date: str
-        Start of the time range (inclusive), e.g. '2024-04-01 00:00:00'.
-    end_date: str
-        End of the time range (exclusive), e.g. '2024-04-01 18:00:00'.
-    time_zone: str
-        Timezone string, e.g. 'Europe/Zurich'.
+    data : gpd.GeoDataFrame
+        GeoDataFrame containing a ``'time'`` column with timezone-aware timestamps.
+    start_date : str
+        Start of the time range (inclusive), e.g. ``'2024-04-01 00:00:00'``.
+    end_date : str
+        End of the time range (exclusive), e.g. ``'2024-04-01 18:00:00'``.
+    time_zone : str
+        Timezone string, e.g. ``'Europe/Zurich'``.
 
     Returns
     -------
@@ -30,9 +30,10 @@ def _filter_by_time(
     Raises
     ------
     TypeError
-        If `data` is not a GeoDataFrame.
+        If ``data`` is not a GeoDataFrame.
     ValueError
-        If `data` is empty, 'time' column is missing, or start_date >= end_date.
+        If ``data`` is empty, the ``'time'`` column is missing, or
+        ``start_date`` >= ``end_date``.
     """
     if not isinstance(data, gpd.GeoDataFrame):
         raise TypeError(f"Expected a GeoDataFrame, got {type(data).__name__}.")
@@ -53,7 +54,7 @@ def _create_track_line(data: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
 
     Parameters
     ----------
-    data: gpd.GeoDataFrame
+    data : gpd.GeoDataFrame
         GeoDataFrame with a valid geometry column representing GPS points,
         assumed to be ordered by time.
 
@@ -65,9 +66,9 @@ def _create_track_line(data: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
     Raises
     ------
     TypeError
-        If `data` is not a GeoDataFrame.
+        If ``data`` is not a GeoDataFrame.
     ValueError
-        If `data` has fewer than 2 points, as a LineString requires at least 2.
+        If ``data`` has fewer than 2 points, as a LineString requires at least 2.
     """
     if not isinstance(data, gpd.GeoDataFrame):
         raise TypeError(f"Expected a GeoDataFrame, got {type(data).__name__}.")
@@ -81,13 +82,13 @@ def _create_track_line(data: gpd.GeoDataFrame) -> gpd.GeoDataFrame:
 
 def _build_static_map(data: gpd.GeoDataFrame):
     """
-    Build an interactive folium map with track, buffers, and static/non-static points.
+    Build an interactive Folium map with track, buffers, and static/non-static points.
 
     Parameters
     ----------
-    data: gpd.GeoDataFrame
-        GeoDataFrame containing at minimum a geometry column, a 'geom_buffer' column,
-        a 'static' column, a 'track_seg_point_id' column, and a 'time' column.
+    data : gpd.GeoDataFrame
+        GeoDataFrame containing at minimum a geometry column and columns
+        ``'geom_buffer'``, ``'static'``, ``'track_seg_point_id'``, and ``'time'``.
 
     Returns
     -------
@@ -97,7 +98,7 @@ def _build_static_map(data: gpd.GeoDataFrame):
     Raises
     ------
     TypeError
-        If `data` is not a GeoDataFrame.
+        If ``data`` is not a GeoDataFrame.
     ValueError
         If any of the required columns are missing.
     """
@@ -134,27 +135,29 @@ def sample_plot_static_not_static(
 
     Parameters
     ----------
-    data: gpd.GeoDataFrame
-        GeoDataFrame containing GPS tracking points with required columns:
-        'time', 'geometry', 'geom_buffer', 'static', 'track_seg_point_id'.
-    start_date: str
-        Start of the time range (inclusive), e.g. '2024-04-01 00:00:00'.
-    end_date: str
-        End of the time range (exclusive), e.g. '2024-04-01 18:00:00'.
-    time_zone: str
-        Timezone string, e.g. 'Europe/Zurich'. Defaults to the project timezone.
+    data : gpd.GeoDataFrame
+        GeoDataFrame containing GPS tracking points. Must include columns:
+        ``'time'``, ``'geometry'``, ``'geom_buffer'``, ``'static'``, and
+        ``'track_seg_point_id'``.
+    start_date : str
+        Start of the time range (inclusive), e.g. ``'2024-04-01 00:00:00'``.
+    end_date : str
+        End of the time range (exclusive), e.g. ``'2024-04-01 18:00:00'``.
+    time_zone : str
+        Timezone string, e.g. ``'Europe/Zurich'``. Defaults to the project
+        timezone.
 
     Returns
     -------
     None
-        Saves 'sample_plot_static.html' to the working directory and opens it.
+        Saves ``'sample_plot_static.html'`` to the working directory.
 
     Raises
     ------
     TypeError
-        If `data` is not a GeoDataFrame.
+        If ``data`` is not a GeoDataFrame.
     ValueError
-        If `data` is empty or required columns are missing.
+        If ``data`` is empty or required columns are missing.
     """
     if not isinstance(data, gpd.GeoDataFrame):
         raise TypeError(f"Expected a GeoDataFrame, got {type(data).__name__}.")

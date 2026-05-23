@@ -9,17 +9,24 @@ def remove_home_points(
 
     Parameters
     ----------
-    data: gpd.GeoDataFrame
+    data : gpd.GeoDataFrame
         GeoDataFrame containing GPS tracking points.
-    home_buffer: gpd.GeoSeries
+    home_buffer : gpd.GeoSeries
         GeoSeries containing the home buffer polygon.
 
     Returns
     -------
     gpd.GeoDataFrame
         The input GeoDataFrame with all points inside the home buffer removed.
+
+    Raises
+    ------
+    TypeError
+        If ``data`` is not a GeoDataFrame, or ``home_buffer`` is not a GeoSeries.
+    ValueError
+        If ``data`` or ``home_buffer`` is empty, their CRS do not match, or
+        either contains null geometries.
     """
-    # check if inputs are GeoDataFrames
     if not isinstance(data, gpd.GeoDataFrame):
         raise TypeError(
             f"Expected a GeoDataFrame for 'data', got {type(data).__name__}."
@@ -28,29 +35,21 @@ def remove_home_points(
         raise TypeError(
             f"Expected a GeoSeries for 'home_buffer', got {type(home_buffer).__name__}."
         )
-
-    # check if GeoDataFrames are empty
     if data.empty:
         raise ValueError("'data' GeoDataFrame is empty.")
     if home_buffer.empty:
         raise ValueError("'home_buffer' GeoDataFrame is empty.")
-
-    # check if CRS matches
     if data.crs != home_buffer.crs:
         raise ValueError(
             f"CRS mismatch: 'data' is {data.crs}, 'home_buffer' is {home_buffer.crs}. Reproject before calling this function."
         )
-
-    # check if geometry columns are valid
     if data.geometry.isnull().any():
         raise ValueError("'data' contains null geometries.")
     if home_buffer.geometry.isnull().any():
         raise ValueError("'home_buffer' contains null geometries.")
 
-    # get GPS tracking points within the home buffer
     home_points = data.intersects(home_buffer.geometry.iloc[0])
 
-    # remove home points from data
     data = data[~home_points]
 
     return data

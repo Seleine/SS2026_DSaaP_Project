@@ -5,36 +5,37 @@ import branca.colormap as cm
 from utils.output import get_output_dir
 
 
-def collect_feature_groups(
+def _collect_feature_groups(
     data_wgs: gpd.GeoDataFrame, colourmap: cm.LinearColormap
 ) -> list[folium.FeatureGroup]:
     """
-    Takes the reprojected GeoDataFrame and the scaled colourmap, returns
-    a list of folium FeatureGroup objects (one per variable).
+    Build a list of Folium FeatureGroup objects, one per variable.
 
-    Parameters:
-    data: gpd.GeoDataFrame: containing the KDE polygons. Must include:
-            - geometry: Polygon or MultiPolygon geometries.
-            - area_km2: Numeric column with the area_km2 of each polygon (km²).
-            - Variable: Categorical column used to split layers.
+    Parameters
+    ----------
+    data_wgs : gpd.GeoDataFrame
+        GeoDataFrame containing the KDE polygons. Must include:
 
-    Returns:
-    folium.FeatureGroup: The constructed folium feature groups.
+        - ``geometry``: Polygon or MultiPolygon geometries.
+        - ``area_km2`` (float): area of each polygon in km².
+        - ``Variable``: categorical column used to split layers.
+    colourmap : branca.colormap.ColorMap
+        Colourmap used to colour polygons by ``area_km2``.
+
+    Returns
+    -------
+    list[folium.FeatureGroup]
+        One FeatureGroup per unique value in the ``'Variable'`` column.
     """
 
     feature_groups = []
-    # variable_name = e.g. "variable1"
-    # subset = the two rows where Variable == "variable1" (poly1 and multi)
     for variable_name, subset in data_wgs.groupby("Variable"):
         fg = folium.FeatureGroup(name=variable_name, show=False)
 
         folium.GeoJson(
             subset,
             style_function=lambda feature: {
-                # feature is a GeoJSON-style Python dict that folium passes in, and feature["properties"]["area_km2"]
-                # reads that polygon's area_km2 value from it
                 "fillColor": colourmap(feature["properties"]["area_km2"]),
-                # the colourmap then converts that number into a hex colour string like "#fd8d3c"
                 "fillOpacity": 0.4,
                 "color": "darkgrey",
                 "weight": 1,
@@ -55,45 +56,57 @@ def collect_feature_groups(
     return feature_groups
 
 
-def get_data_extend(data_wgs: gpd.GeoDataFrame) -> list[list[float]]:
+def _get_data_extend(data_wgs: gpd.GeoDataFrame) -> list[list[float]]:
     """
     Fit map to data extent.
 
-    Parameters:
-    data: gpd.GeoDataFrame: containing the KDE polygons.
+    Parameters
+    ----------
+    data_wgs : gpd.GeoDataFrame
+        GeoDataFrame containing the KDE polygons.
 
-    Returns:
-    list[list[float]]: Bounding box as [[min_lat, min_lon], [max_lat, max_lon]].
+    Returns
+    -------
+    list[list[float]]
+        Bounding box as ``[[min_lat, min_lon], [max_lat, max_lon]]``.
     """
 
     bounds = data_wgs.total_bounds
     return [[bounds[1], bounds[0]], [bounds[3], bounds[2]]]
 
 
-def plot_kde(data: gpd.GeoDataFrame, plot_name: str) -> folium.Map:
+def plot_kde(data: gpd.pd.DataFrame, plot_name: str) -> None:
     """
-    Plot kernel density estimation (KDE) home ranges as an interactive leaflet map.
+    Plot kernel density estimation (KDE) home ranges as an interactive Leaflet map.
 
-    Polygons are grouped by the 'Variable' column and rendered as mutually exclusive radio-button layers, coloured
-    by area_km2 size. The resulting map is saved as an HTML file and opened in the
-    default browser.
+    Polygons are grouped by the ``'Variable'`` column and rendered as mutually
+    exclusive radio-button layers, coloured by ``area_km2`` size. The resulting
+    map is saved as an HTML file.
 
-    Parameters:
-    data: gpd.GeoDataFrame: containing the KDE polygons. Must include:
-            - geometry: Polygon or MultiPolygon geometries.
-            - area_km2: Numeric column with the area_km2 of each polygon (km²).
-            - Variable: Categorical column used to split layers.
-    plot_name: string of plot name
+    Parameters
+    ----------
+    data : gpd.GeoDataFrame
+        GeoDataFrame containing the KDE polygons. Must include:
 
-    Returns:
-    folium.Map: The constructed folium map object.
+        - ``geometry``: Polygon or MultiPolygon geometries.
+        - ``area_km2`` (float): area of each polygon in km².
+        - ``Variable``: categorical column used to split layers.
+    plot_name : str
+        The name of the saved HTML file.
 
-    Raises:
+    Returns
+    -------
+    None
+        Saves html to the working directory.
+
+    Raises
+    ------
     TypeError
-        If `data` is not a GeoDataFrame.
+        If ``data`` is not a GeoDataFrame, or ``plot_name`` is not a str.
     ValueError
-        If required columns ('geometry', 'area_km2', 'Variable') are missing,
-        or if the GeoDataFrame is empty.
+        If ``data`` is missing required columns (``geometry``, ``area_km2``, or
+        ``Variable``), is empty, has a non-numeric or NaN-containing ``area_km2``
+        column, or has no CRS set.
     """
     if not isinstance(data, gpd.GeoDataFrame):
         raise TypeError(f"Expected a GeoDataFrame, got {type(data).__name__}.")
@@ -114,12 +127,12 @@ def plot_kde(data: gpd.GeoDataFrame, plot_name: str) -> folium.Map:
     if data.crs is None:
         raise ValueError("GeoDataFrame has no CRS set.")
 
-    # Change to EPSG:4326 for leaflet
+    # change to EPSG:4326 for leaflet
     data_wgs = data.copy()
     data_wgs.geometry = data_wgs.geometry.make_valid()
     data_wgs = data_wgs.to_crs(epsg=4326)
 
-    # stretch the colourmap to (YlOrRd_09) match your actual data range
+    # stretch the colourmap to (YlOrRd_09) match actual data range
     # largest area_km2 has the darkest colour and vice versa
     colourmap = cm.LinearColormap(
         colors=list(reversed(cm.linear.YlOrRd_09.colors)),
@@ -127,29 +140,25 @@ def plot_kde(data: gpd.GeoDataFrame, plot_name: str) -> folium.Map:
         vmax=data_wgs["area_km2"].max(),
     )
 
-    # Initialise folium map with default OSM tiles
     m = folium.Map()
 
-    # Split GeoDataFrame by Variable, collect FeatureGroups
-    feature_groups = collect_feature_groups(data_wgs=data_wgs, colourmap=colourmap)
+    # split GeoDataFrame by variable, collect FeatureGroups
+    feature_groups = _collect_feature_groups(data_wgs=data_wgs, colourmap=colourmap)
 
     # add each feature group to the map
     for fg in feature_groups:
         fg.add_to(m)
 
-    # GroupedLayerControl with exclusive_groups=True for radio-button behaviour
+    # GroupedLayerControl with exclusive_groups=True for radio-button
     GroupedLayerControl(
         groups={"Variables": feature_groups},
         exclusive_groups=True,
         collapsed=False,
     ).add_to(m)
 
-    # Fit map to data extent
-    m.fit_bounds(get_data_extend(data_wgs=data_wgs))
+    m.fit_bounds(_get_data_extend(data_wgs=data_wgs))
 
     plots_dir = get_output_dir()
 
     output_html = plots_dir / f"{plot_name}.html"
     m.save(output_html)
-
-    return m
