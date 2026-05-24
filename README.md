@@ -16,17 +16,18 @@ Open street map is used as base layer.
 ## Repository Structure
 
 ```
+.github/workflows   folder containing GitHub actions
 data_tractive/      input datasets from tractive
+optimisation/       flamegraph for visualising profiling data
 src/                analysis scripts
 tests/              test files
-.github/workflows   folder containing GitHub actions
 ```
 
-When running the code, three more folders are generated: quality_control, plots, and report.
-Depending on from where the user runs the script, the two folders are generated in the root or in the src folder.
-The quality_control folder contains the barplots, showing the number of data points per phase.
-The plots folder contains the interactive plots.
-The report folder contains the final report.
+When running the code, three more folders are generated: `quality_control`, `plots`, and `report`.
+Depending on from where the user runs the script, the two folders are generated in the root or in the `src` folder.
+The `quality_control` folder contains the barplots, showing the number of data points per phase and the summary table.
+The `plots` folder contains the interactive plots.
+The `report` folder contains the final report.
 
 ## Install UV
 Installation instructions can be found in the official uv documentation:
@@ -95,14 +96,15 @@ uv sync
 uv run src/main.py
 ```
 
-The resulting tables and plots will appear in the folders «quality_control» and «plots».
-The resulting report will appear in the folder «report».
+The resulting tables and plots will appear in the folders `quality_control` and `plots`.
+The resulting report will appear in the folder `report`.
 
 ## Data
 
-The GPS data from [Tractive](https://tractive.com/) must be provided by the user. For calculating the home range at least 50 data points must be provided.
+The GPS data from [Tractive](https://tractive.com/) must be provided by the user.
+For calculating the home range at least 50 data points must be provided.
 Therefore, the tracker must be worn outside for at least two days.
-The folder «data_tractive» contains sample GPS data colleted from a cat.
+The folder `data_tractive` contains sample GPS data colleted from a cat.
 
 ## Authors
 
@@ -115,6 +117,7 @@ Schloss
 
 ## License
 
-This project is licensed under the MIT License. See the License file for details.
+This project is licensed under the MIT License.
+See the License file for details.
 
 
