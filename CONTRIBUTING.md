@@ -1,4 +1,4 @@
-# Contributing to SS2026_DSaaP_Project
+# Contributing to Investigating Cat Movement Patterns Project
 Thank you for your interest in contributing to this project.
 This document explains how to get involved, report issues, and submit changes to the Investigating Cat Movement Patterns analysis pipeline.
 
@@ -46,6 +46,33 @@ See the README for full installation and setup instructions.
 
 ## Flame Graph
 
+A flame graph is a visualisation of profiling data that shows which functions consume the most execution time.
+It is useful for identifying performance bottlenecks in the pipeline.
+The width of each bar represents the proportion of total execution time spent in that function.
+
+Generate the profiling output:
+```bash
+uv run python -m cProfile -o o.prof src/profiling_example.py
+```
+
+Convert profiler output to folded format:
+```bash
+uv run flameprof o.prof --format log > o.folded
+```
+
+Generate the flame graph as an interactive HTML file:
+```bash
+uv run pyinstrument -o flamegraph.html --html src/profiling_example.py
+```
+
+Open the flame graph in your browser:
+```bash
+start flamegraph.html
+```
+
+Note: o.prof and o.folded are intermediate files and are listed in .gitignore. 
+Only flamegraph.html needs to be kept if you wish to share the output.
+
 A flame graph is a visualisation of profiling data that shows which functions consume the most execution time. It is useful for identifying performance bottlenecks in the pipeline. The width of each bar represents the proportion of total execution time spent in that function.
 
 # Generate the profiling output
@@ -76,7 +103,7 @@ To verify Docker is running enter:
 ```bash
 docker --version
 docker info
-´´´
+```
 
 After downloading and installing the Docker Desktop App, the following command can be used to build the Docker image:
 * Do not forget to copy paste the '.' otherwise the path is not set correctly and there will be an error!
